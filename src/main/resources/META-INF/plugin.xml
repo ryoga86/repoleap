@@ -5,13 +5,19 @@
     <name>RepoLeap</name>
     <vendor email="mail@pdenis.de" url="https://github.com/ryoga86/repoleap">Peter Denis</vendor>
 
+    <!--
+      The first ~165 characters of text become the teaser on the plugin card (Marketplace list, embeddable card),
+      cut at a word boundary. The second text paragraph starts with a long word on purpose, so nothing of it
+      shows up there.
+    -->
     <description><![CDATA[
-        <p><b>Leap to any of your local Git repositories in a few keystrokes.</b></p>
+        <p><b>Leap to any local Git repository in a few keystrokes:</b> one shortcut, fuzzy search across all your
+        repos, done. Stop digging through folders like it’s 1999.</p>
 
         <p><img src="https://raw.githubusercontent.com/ryoga86/repoleap/main/docs/banner.png"
             alt="RepoLeap" width="600" height="237"></p>
 
-        <p>Press <b>Option+Command+I</b> (macOS) or <b>Alt+Shift+P</b> (Windows/Linux): a search popup lists every Git
+        <p><b>Option+Command+I</b> (macOS) or <b>Alt+Shift+P</b> (Windows/Linux) opens a search popup with every Git
         repository in the folders you configured. Type a few letters of the name or path, press <b>Enter</b> –
         and you are in the project.</p>
 
