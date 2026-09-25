@@ -7,6 +7,7 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
 | Punkt                               | Status                                                                  |
 |-------------------------------------|-------------------------------------------------------------------------|
 | Name / ID                           | `RepoLeap` / `de.pdenis.repoleap` (ID nach 1. Upload fix!)      |
+| Marketplace                         | ID `34545`, https://plugins.jetbrains.com/plugin/34545-repoleap – für eine eigene Website gibt es den Install-Button als `<iframe frameborder="none" width="245px" height="48px" src="https://plugins.jetbrains.com/embeddable/install/34545"></iframe>` (GitHub und die Plugin-Beschreibung zeigen keine iframes, im README stehen deshalb Badges) |
 | Vendor                              | Peter Denis, mail@pdenis.de, https://github.com/ryoga86/repoleap (`gradle.properties` → `pluginVendor` + `plugin.xml`) |
 | Version                             | `1.0.0` (`gradle.properties` → `pluginVersion`)                         |
 | Lizenz / EULA                       | MIT (`LICENSE`)                                                         |

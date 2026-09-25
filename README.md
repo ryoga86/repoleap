@@ -2,6 +2,10 @@
 
 # RepoLeap
 
+[![Version](https://img.shields.io/jetbrains/plugin/v/34545)](https://plugins.jetbrains.com/plugin/34545-repoleap)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/34545)](https://plugins.jetbrains.com/plugin/34545-repoleap)
+[![Build](https://github.com/ryoga86/repoleap/actions/workflows/build.yml/badge.svg)](https://github.com/ryoga86/repoleap/actions/workflows/build.yml)
+
 Leap to any of your local Git repositories in a few keystrokes – in IntelliJ IDEA and all other JetBrains IDEs.
 
 Press **⌥⌘I** (macOS) or **Alt+Shift+P** (Windows/Linux), type a few letters of the repository name or
@@ -67,7 +71,10 @@ The shortcut can be changed in *Settings | Keymap* (search for “Open Repositor
 
 ## Installation
 
-- **JetBrains Marketplace**: *Settings | Plugins | Marketplace*, search for **RepoLeap**
+[![Get from JetBrains Marketplace](https://img.shields.io/badge/Get_from-JetBrains_Marketplace-000000?style=for-the-badge&logo=jetbrains&logoColor=white)](https://plugins.jetbrains.com/plugin/34545-repoleap)
+
+- **JetBrains Marketplace**: click *Install* on the [plugin page](https://plugins.jetbrains.com/plugin/34545-repoleap)
+  (installs it into a running IDE), or in the IDE: *Settings | Plugins | Marketplace*, search for **RepoLeap**
 - **Manually**: download the ZIP from [Releases](https://github.com/ryoga86/repoleap/releases) and use
   *Settings | Plugins | ⚙ | Install Plugin from Disk…*
 
