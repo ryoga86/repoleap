@@ -1,4 +1,4 @@
-![RepoLeap – a worm leaping from folder A to folder B](docs/banner.png)
+![RepoLeap – Stop digging through folders like it’s 1999.](docs/banner-github.png)
 
 # RepoLeap
 
