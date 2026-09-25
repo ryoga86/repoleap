@@ -1,0 +1,14 @@
+.gradle
+.intellijPlatform
+.kotlin
+build
+out
+.idea/*
+!.idea/icon.png
+*.iml
+.DS_Store
+
+# Personal release guide, local install script and design drafts (not part of the public repository)
+RepoLeap-Veroeffentlichung.pdf
+scripts/install-local.sh
+dev/

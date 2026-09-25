@@ -1,0 +1,98 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<!-- id, name, version, vendor, since-build and change-notes are patched from gradle.properties / CHANGELOG.md at build time. -->
+<idea-plugin>
+    <id>de.pdenis.repoleap</id>
+    <name>RepoLeap</name>
+    <vendor email="mail@pdenis.de" url="https://github.com/ryoga86/repoleap">Peter Denis</vendor>
+
+    <description><![CDATA[
+        <p><b>Leap to any of your local Git repositories in a few keystrokes.</b></p>
+
+        <p><img src="https://raw.githubusercontent.com/ryoga86/repoleap/main/docs/banner.png"
+            alt="RepoLeap" width="600" height="237"></p>
+
+        <p>Press <b>Option+Command+I</b> (macOS) or <b>Alt+Shift+P</b> (Windows/Linux): a search popup lists every Git
+        repository in the folders you configured. Type a few letters of the name or path, press <b>Enter</b> –
+        and you are in the project.</p>
+
+        <h3>Main features</h3>
+        <ul>
+            <li><b>One popup for all your repositories</b> – any number of root folders, searched recursively
+                (worktrees included) with a configurable depth and ignored folder names</li>
+            <li><b>Free-text search</b> – several words in any order, matched against names and paths,
+                fuzzy on names, with highlighted matches</li>
+            <li><b>Always the right order</b> – pinned repositories first, then the one in the current window,
+                then those open in other windows, then the rest; the best matches and recently opened repositories
+                lead within each group</li>
+            <li><b>Jump instead of reopening</b> – open repositories are marked (<i>current window</i>,
+                <i>other window</i>) and choosing one brings exactly that window to the front</li>
+            <li><b>macOS window tabs</b> – bring a repository that is open in another window into the current window
+                as a tab (<b>Shift+Enter</b>)</li>
+            <li><b>Open the way you like</b> – new window, current window or the IDE setting;
+                <b>Shift+Enter</b> uses the alternative</li>
+        </ul>
+
+        <h3>More features</h3>
+        <p>Press <b>Tab</b> (or right-click) on a repository for its actions:</p>
+        <ul>
+            <li><b>Info</b> – branch, upstream with ahead/behind, last commit, remotes, uncommitted and untracked
+                files, commits that are not pushed anywhere, stashes</li>
+            <li><b>Open the remote in the browser</b> – GitHub, GitLab, Gitea/Forgejo, Bitbucket Cloud,
+                Bitbucket Server / Data Center, Azure DevOps, AWS CodeCommit, SourceHut, or your own rules</li>
+            <li><b>Close the project</b>, show the folder in the system file manager, copy the path</li>
+            <li><b>Pin</b> favorites to the top, <b>hide</b> repositories you never need</li>
+            <li><b>Rename</b> the folder or <b>move it to the Trash</b> – with a warning about everything
+                that would otherwise be lost (uncommitted changes, unpushed commits, stashes, no remote)</li>
+        </ul>
+        <p>Scanning runs in the background, so the popup opens instantly.</p>
+
+        <h3>Getting started</h3>
+        <ol>
+            <li>Open <i>Settings | Tools | RepoLeap</i> and add the folders that contain your repositories.</li>
+            <li>Press the shortcut, or use <i>File | Open Repository…</i>.</li>
+        </ol>
+        <p>The shortcut can be changed in <i>Settings | Keymap</i> (search for “Open Repository”).</p>
+
+        <h3>Privacy</h3>
+        <p>RepoLeap does not collect or transmit any data. Only if the type of a self-hosted git server can not be
+        told from the remote URL, it asks that git server once whether it is a Bitbucket Server (can be switched off
+        in the settings).</p>
+
+        <h3>Feedback</h3>
+        <p>Found a bug or have an idea? <a href="https://github.com/ryoga86/repoleap/issues">Open an issue on GitHub</a>.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.RepoLeapBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable
+                id="de.pdenis.repoleap.settings"
+                parentId="tools"
+                instance="de.pdenis.repoleap.settings.RepoLeapConfigurable"
+                bundle="messages.RepoLeapBundle"
+                key="settings.displayName"/>
+
+        <notificationGroup id="RepoLeap" displayType="BALLOON" bundle="messages.RepoLeapBundle"
+                           key="notification.group.name"/>
+    </extensions>
+
+    <actions>
+        <!-- Text and description come from messages/RepoLeapBundle.properties (action.<id>.text / .description) -->
+        <action id="de.pdenis.repoleap.OpenRepository"
+                class="de.pdenis.repoleap.actions.OpenRepositoryAction"
+                icon="AllIcons.Nodes.Folder">
+            <!-- macOS: Option+Command+I, Windows/Linux: Alt+Shift+P. Both are unused in the bundled macOS/default
+                 keymaps of 2025.2+ (Alt+Shift+P is only used by the Mercurial plugin and the Eclipse/Emacs keymaps). -->
+            <keyboard-shortcut keymap="$default" first-keystroke="alt shift P"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt I"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt I"/>
+            <!-- macOS keymaps inherit $default; Option+Shift+P types a character on macOS, so don't bind it there -->
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift P" remove="true"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift P" remove="true"/>
+            <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="$LRU"/>
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
