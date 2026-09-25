@@ -102,6 +102,7 @@ intellijPlatform {
 changelog {
     groups.empty()
     repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
+    versionPrefix = "" // tags and GitHub releases are named like the version (1.0.0), see build.yml
 }
 
 // Extra run configuration: start the plugin inside a locally installed IDE (e.g. your current IntelliJ IDEA)
