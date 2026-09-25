@@ -2,8 +2,6 @@
 
 # RepoLeap
 
-[![Buy me a coffee at ko-fi.com](https://storage.ko-fi.com/cdn/kofi5.png?v=6)](https://ko-fi.com/ryoga86)
-
 Leap to any of your local Git repositories in a few keystrokes – in IntelliJ IDEA and all other JetBrains IDEs.
 
 Press **⌥⌘I** (macOS) or **Alt+Shift+P** (Windows/Linux), type a few letters of the repository name or
@@ -26,7 +24,7 @@ path, press **Enter** – the repository opens as a project.
 - **Fixed order** that no search result breaks: pinned repositories, then the one in the **current window**,
   then those open in **other windows**, then the rest; inside each group the best match and recently opened
   repositories come first
-- Open repositories are marked (green **● current window**, blue **● other window**) – choosing one brings exactly
+- Open repositories are marked (🟢 **current window**, 🔵 **other window**) – choosing one brings exactly
   that window to the front
 - **macOS window tabs**: bring a repository that is open in another window into the current window as a tab
   (**Shift+Enter** or *Merge into This Window*). If it is the only other window, IntelliJ's *Merge All Windows* is
@@ -124,7 +122,7 @@ accident. Releases are described in [RELEASING.md](RELEASING.md).
 
 RepoLeap is free and open source. If it saves you time, I'd be happy about a coffee:
 
-[![Buy me a coffee at ko-fi.com](https://storage.ko-fi.com/cdn/kofi5.png?v=6)](https://ko-fi.com/ryoga86)
+<a href="https://ko-fi.com/ryoga86"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" alt="Buy me a coffee at ko-fi.com" height="36"></a>
 
 Bugs and ideas: [GitHub issues](https://github.com/ryoga86/repoleap/issues)
 
