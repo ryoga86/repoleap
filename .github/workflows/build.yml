@@ -1,11 +1,11 @@
-# Build, test and verify the plugin on every push to main and on pull requests.
+# Build, test and verify the plugin on every push to main/develop and on pull requests.
 # On main, a draft GitHub release is prepared; publishing that draft triggers release.yml.
 # Based on https://github.com/JetBrains/intellij-platform-plugin-template
 
 name: Build
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
 
 concurrency:
@@ -118,7 +118,8 @@ jobs:
 
   releaseDraft:
     name: Release draft
-    if: github.event_name != 'pull_request'
+    # Only for pushes to main - develop is built and verified, but never prepares a release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [ build, test, verify ]
     runs-on: ubuntu-latest
     permissions:

@@ -1,11 +1,14 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Updates target the develop branch (next version); main only receives releases.
 version: 2
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
