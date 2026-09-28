@@ -6,10 +6,6 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/34545)](https://plugins.jetbrains.com/plugin/34545-repoleap)
 [![Build](https://github.com/ryoga86/repoleap/actions/workflows/build.yml/badge.svg)](https://github.com/ryoga86/repoleap/actions/workflows/build.yml)
 
-> [!NOTE]
-> RepoLeap is currently in review at the JetBrains Marketplace. Until it is approved, the Marketplace links and
-> badges don't work yet and there is no download – in the meantime you can [build it from source](#building-from-source).
-
 Leap to any of your local Git repositories in a few keystrokes – in IntelliJ IDEA and all other JetBrains IDEs.
 
 Press **⌥⌘I** (macOS) or **Alt+Shift+P** (Windows/Linux), type a few letters of the repository name or
