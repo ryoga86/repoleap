@@ -1,13 +1,12 @@
 package de.pdenis.repoleap.git
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import java.nio.file.Path
 
 /** Entry point for git data inside the IDE. */
 object GitSupport {
 
     /** Uses the `git` found on the PATH of the IDE (the IDE loads the shell environment on macOS). */
-    fun reader(): GitRepoReader = GitRepoReader(PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS("git")?.absolutePath)
+    fun reader(): GitRepoReader = GitRepoReader(ExecutableFinder.find("git")?.toString())
 
     /**
      * The remote to open in the browser: `origin` if it has a usable URL, otherwise the first one that has.
