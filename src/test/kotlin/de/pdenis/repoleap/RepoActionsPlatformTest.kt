@@ -147,6 +147,24 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
         }
     }
 
+    fun testRowDetailsSwitchedInThePopupAreSavedAndShownAtOnce() {
+        val state = RepoLeapSettings.getInstance().state
+        val before = state.showPath
+        try {
+            state.showPath = true
+            withPopup(repos("alpha")) { popup ->
+                assertTrue(popup.rendererForTest().showPath)
+                popup.setRowDetailForTest(RepoLeapSettings.State::showPath, false)
+                assertFalse(state.showPath)
+                assertFalse(popup.rendererForTest().showPath)
+                popup.setSearchTextForTest("repoleap-actions") // hidden path is still searched
+                assertEquals(listOf("alpha"), popup.visibleRepoNamesForTest())
+            }
+        } finally {
+            state.showPath = before
+        }
+    }
+
     fun testRenameAndTrashAreDisabledWhileTheRepositoryIsOpen() {
         val basePath = Path.of(project.basePath!!)
         Files.createDirectories(basePath)

@@ -12,9 +12,9 @@ import javax.swing.JList
 
 /** Renders `name  branch  ~/path/to/name  ● other window` with highlighted matches and colored tags. */
 internal class RepoListCellRenderer(
-    private val showBranch: Boolean = true,
-    private val showPath: Boolean = true,
-    private val showWindowState: Boolean = true,
+    var showBranch: Boolean = true,
+    var showPath: Boolean = true,
+    var showWindowState: Boolean = true,
 ) : ColoredListCellRenderer<RepoListItem>() {
 
     override fun customizeCellRenderer(

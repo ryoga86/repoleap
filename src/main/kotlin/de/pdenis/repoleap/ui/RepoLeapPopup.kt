@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -47,6 +48,7 @@ import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
+import kotlin.reflect.KMutableProperty1
 
 /**
  * The search popup: a text field on top, the matching repositories below.
@@ -73,6 +75,7 @@ class RepoLeapPopup(
     private val searchField = SearchTextField(false)
     private val model = CollectionListModel<RepoListItem>()
     private val list = JBList(model)
+    private val renderer = RepoListCellRenderer()
     private val actionModel = CollectionListModel<RepoAction>()
     private val actionList = JBList(actionModel)
     private val actionsHeader = SimpleColoredComponent()
@@ -101,8 +104,8 @@ class RepoLeapPopup(
             .toSet()
         currentProjectPath = project?.takeUnless { it.isDisposed }?.basePath?.let(::normalizePath)
 
-        val state = settings.state
-        setUpRepositoryList(RepoListCellRenderer(state.showBranch, state.showPath, state.showWindowState))
+        applyRowDetails()
+        setUpRepositoryList(renderer)
         setUpActionList()
         setUpSearchField()
 
@@ -370,8 +373,15 @@ class RepoLeapPopup(
             templatePresentation.icon = AllIcons.ObjectBrowser.Sorted
             SortMode.entries.forEach { add(SortAction(it)) }
         }
+        val showGroup = DefaultActionGroup(RepoLeapBundle.message("popup.action.show"), true).apply {
+            templatePresentation.icon = AllIcons.Actions.Show
+            add(RowDetailAction(RepoLeapBundle.message("settings.show.branch"), RepoLeapSettings.State::showBranch))
+            add(RowDetailAction(RepoLeapBundle.message("settings.show.path"), RepoLeapSettings.State::showPath))
+            add(RowDetailAction(RepoLeapBundle.message("settings.show.windowState"), RepoLeapSettings.State::showWindowState))
+        }
         val group = DefaultActionGroup(
             sortGroup,
+            showGroup,
             PopupAction(RepoLeapBundle.message("popup.action.refresh"), AllIcons.Actions.Refresh) {
                 index.rescan()
                 updateEmptyText()
@@ -448,6 +458,40 @@ class RepoLeapPopup(
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
         override fun isSelected(e: AnActionEvent): Boolean = settings.state.sortMode == mode
         override fun setSelected(e: AnActionEvent, state: Boolean) = setSortMode(mode)
+    }
+
+    private fun applyRowDetails() {
+        val state = settings.state
+        renderer.showBranch = state.showBranch
+        renderer.showPath = state.showPath
+        renderer.showWindowState = state.showWindowState
+        list.repaint()
+    }
+
+    @TestOnly
+    internal fun setRowDetailForTest(property: KMutableProperty1<RepoLeapSettings.State, Boolean>, visible: Boolean) =
+        setRowDetail(property, visible)
+
+    @TestOnly
+    internal fun rendererForTest(): RepoListCellRenderer = renderer
+
+    private fun setRowDetail(property: KMutableProperty1<RepoLeapSettings.State, Boolean>, visible: Boolean) {
+        property.set(settings.state, visible)
+        applyRowDetails()
+    }
+
+    /** Same setting as on the settings page. The menu stays open, so several details can be switched at once. */
+    private inner class RowDetailAction(
+        text: String,
+        private val property: KMutableProperty1<RepoLeapSettings.State, Boolean>,
+    ) : DumbAwareToggleAction(text) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+        override fun isSelected(e: AnActionEvent): Boolean = property.get(settings.state)
+        override fun setSelected(e: AnActionEvent, state: Boolean) = setRowDetail(property, state)
+        override fun update(e: AnActionEvent) {
+            super.update(e)
+            e.presentation.keepPopupOnPerform = KeepPopupOnPerform.Always
+        }
     }
 
     private class PopupAction(
