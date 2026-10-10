@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- The popup shows the checked out branch of every repository (the short commit hash for a detached HEAD)
+- *Switch Branch…* in the actions (Tab): pick a local branch, or a remote one to create a local tracking branch.
+  Runs `git switch`, so nothing is forced: if local changes would be overwritten, git refuses and says why
+
 ### Fixed
 
 - Finding `git` no longer uses an IDE API that is scheduled for removal (future-proofing for IDE 2026.3 and later;

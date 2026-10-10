@@ -10,6 +10,8 @@ data class RepoEntry(
     val path: Path,
     /** Path shown to the user (home directory abbreviated with `~`). */
     val displayPath: String,
+    /** Checked out branch (short commit hash for a detached HEAD) at scan time, `null` if unknown. */
+    val branch: String? = null,
 ) {
     val pathString: String get() = path.toString()
 }
