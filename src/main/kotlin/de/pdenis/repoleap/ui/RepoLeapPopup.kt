@@ -35,6 +35,8 @@ import de.pdenis.repoleap.settings.SortMode
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.CardLayout
+import java.awt.Component
+import java.awt.KeyboardFocusManager
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -159,21 +161,37 @@ class RepoLeapPopup(
         list.cellRenderer = renderer
         list.addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
-                if (e.isPopupTrigger) showActionsAt(e)
+                onPress()
+                if (!ignoreClick && e.isPopupTrigger) showActionsAt(e)
             }
 
             override fun mouseReleased(e: MouseEvent) {
-                if (e.isPopupTrigger) showActionsAt(e)
+                if (!ignoreClick && e.isPopupTrigger) showActionsAt(e)
             }
 
             override fun mouseClicked(e: MouseEvent) {
-                if (!SwingUtilities.isLeftMouseButton(e) || e.isControlDown) return
+                if (ignoreClick || !SwingUtilities.isLeftMouseButton(e) || e.isControlDown) return
                 val row = rowAt(list, e) ?: return
                 list.selectedIndex = row
                 openSelected(alternative = e.isShiftDown)
             }
         })
     }
+
+    /** Set on mouse press, valid until the next press: the current click must not open or run anything. */
+    private var ignoreClick = false
+
+    private fun onPress() {
+        ignoreClick = closesMenuOnly(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
+        if (ignoreClick) searchField.textEditor.requestFocusInWindow()
+    }
+
+    /**
+     * The lists are not focusable, so the focus is always in the search field - except while a menu of the toolbar
+     * (Sort, Show) is open. A click into the list then only closes that menu, like a click anywhere else would.
+     */
+    internal fun closesMenuOnly(focusOwner: Component?): Boolean =
+        focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, panel)
 
     private fun showActionsAt(e: MouseEvent) {
         val row = rowAt(list, e) ?: return
@@ -186,8 +204,10 @@ class RepoLeapPopup(
         actionList.isFocusable = false
         actionList.cellRenderer = RepoActionCellRenderer()
         actionList.addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent) = onPress()
+
             override fun mouseClicked(e: MouseEvent) {
-                if (!SwingUtilities.isLeftMouseButton(e)) return
+                if (ignoreClick || !SwingUtilities.isLeftMouseButton(e)) return
                 val row = rowAt(actionList, e) ?: return
                 actionList.selectedIndex = row
                 runSelectedAction()
@@ -471,6 +491,9 @@ class RepoLeapPopup(
     @TestOnly
     internal fun setRowDetailForTest(property: KMutableProperty1<RepoLeapSettings.State, Boolean>, visible: Boolean) =
         setRowDetail(property, visible)
+
+    @TestOnly
+    internal fun searchEditorForTest(): Component = searchField.textEditor
 
     @TestOnly
     internal fun rendererForTest(): RepoListCellRenderer = renderer

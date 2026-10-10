@@ -165,6 +165,14 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
         }
     }
 
+    fun testAClickWhileAToolbarMenuIsOpenOnlyClosesTheMenu() {
+        withPopup(repos("alpha")) { popup ->
+            assertFalse("focus in the search field: the click opens", popup.closesMenuOnly(popup.searchEditorForTest()))
+            assertTrue("focus in a menu of the toolbar", popup.closesMenuOnly(javax.swing.JList<String>()))
+            assertTrue("no focus in the popup", popup.closesMenuOnly(null))
+        }
+    }
+
     fun testRenameAndTrashAreDisabledWhileTheRepositoryIsOpen() {
         val basePath = Path.of(project.basePath!!)
         Files.createDirectories(basePath)
