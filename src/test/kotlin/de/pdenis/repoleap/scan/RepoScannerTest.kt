@@ -29,7 +29,9 @@ class RepoScannerTest {
         excluded: Set<String> = setOf("node_modules"),
         skipHidden: Boolean = true,
         home: String = "/nonexistent-home",
-    ): List<RepoEntry> = RepoScanner(ScanOptions(roots, maxDepth, excluded, skipHidden), homeDir = home).scan()
+        useTilde: Boolean = true,
+    ): List<RepoEntry> =
+        RepoScanner(ScanOptions(roots, maxDepth, excluded, skipHidden), homeDir = home, useTilde = useTilde).scan()
 
     private fun names(entries: List<RepoEntry>) = entries.map { it.name }
 
@@ -116,5 +118,13 @@ class RepoScannerTest {
         val entries = scan(roots = listOf("~/code"), home = root.toString())
         assertEquals(1, entries.size)
         assertEquals("~/code/my-repo".replace('/', java.io.File.separatorChar), entries[0].displayPath)
+    }
+
+    @Test
+    fun `without tilde (Windows) the full path is shown, but a tilde in a root is still expanded`() {
+        val repo = repo("code/my-repo")
+        val entries = scan(roots = listOf("~/code"), home = root.toString(), useTilde = false)
+        assertEquals(1, entries.size)
+        assertEquals(repo.toAbsolutePath().normalize().toString(), entries[0].displayPath)
     }
 }
