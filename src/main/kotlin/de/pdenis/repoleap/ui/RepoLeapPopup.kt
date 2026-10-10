@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
@@ -29,6 +30,7 @@ import de.pdenis.repoleap.search.RepoMatcher
 import de.pdenis.repoleap.settings.OpenMode
 import de.pdenis.repoleap.settings.RepoLeapConfigurable
 import de.pdenis.repoleap.settings.RepoLeapSettings
+import de.pdenis.repoleap.settings.SortMode
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.CardLayout
@@ -232,13 +234,15 @@ class RepoLeapPopup(
 
         val items = repositories.mapNotNull { repo ->
             val match = RepoMatcher.match(tokens, repo.name, repo.displayPath) ?: return@mapNotNull null
-            val recentBonus = recentRank[repo.pathString]?.let { (RepoLeapSettings.MAX_RECENT - it) * RECENT_BONUS } ?: 0
+            val rank = recentRank[repo.pathString]
+            val recentBonus = rank?.let { (RepoLeapSettings.MAX_RECENT - it) * RECENT_BONUS } ?: 0
             RepoListItem(
                 repo, match, match.score + recentBonus,
                 pinned = settings.isPinned(repo.pathString),
                 windowState = windowStateOf(repo.pathString),
+                recentRank = rank,
             )
-        }.sortedWith(RepoListItem.ORDER)
+        }.sortedWith(RepoListItem.order(settings.state.sortMode, searching = tokens.isNotEmpty()))
 
         val toSelect = pendingSelection ?: if (keepSelection) list.selectedValue?.repo?.path else null
         model.replaceAll(items)
@@ -361,7 +365,12 @@ class RepoLeapPopup(
     }
 
     private fun createToolbar(): JComponent {
+        val sortGroup = DefaultActionGroup(RepoLeapBundle.message("popup.action.sort"), true).apply {
+            templatePresentation.icon = AllIcons.ObjectBrowser.Sorted
+            SortMode.entries.forEach { add(SortAction(it)) }
+        }
         val group = DefaultActionGroup(
+            sortGroup,
             PopupAction(RepoLeapBundle.message("popup.action.refresh"), AllIcons.Actions.Refresh) {
                 index.rescan()
                 updateEmptyText()
@@ -423,6 +432,21 @@ class RepoLeapPopup(
     @TestOnly
     internal fun closeForTest() {
         popup?.cancel()
+    }
+
+    @TestOnly
+    internal fun setSortModeForTest(mode: SortMode) = setSortMode(mode)
+
+    private fun setSortMode(mode: SortMode) {
+        settings.state.sortMode = mode
+        refilter(keepSelection = true)
+    }
+
+    /** Remembered in the settings, like choosing the default there. */
+    private inner class SortAction(private val mode: SortMode) : DumbAwareToggleAction(mode.displayName) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+        override fun isSelected(e: AnActionEvent): Boolean = settings.state.sortMode == mode
+        override fun setSelected(e: AnActionEvent, state: Boolean) = setSortMode(mode)
     }
 
     private class PopupAction(

@@ -8,16 +8,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListUtil
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.util.ui.JBUI
 import de.pdenis.repoleap.RepoLeapBundle
 import de.pdenis.repoleap.git.RemoteBrowserUrls
@@ -88,6 +91,11 @@ class RepoLeapConfigurable : BoundConfigurable(RepoLeapBundle.message("settings.
             }
 
             group(RepoLeapBundle.message("settings.group.opening")) {
+                row(RepoLeapBundle.message("settings.sortMode.label")) {
+                    comboBox(SortMode.entries, SimpleListCellRenderer.create("") { it.displayName })
+                        .bindItem(state::sortMode.toNullableProperty())
+                        .comment(RepoLeapBundle.message("settings.sortMode.comment"))
+                }
                 buttonsGroup {
                     OpenMode.entries.forEach { mode ->
                         row { radioButton(mode.displayName, mode) }

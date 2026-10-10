@@ -13,6 +13,7 @@ import de.pdenis.repoleap.scan.RepoEntry
 import de.pdenis.repoleap.scan.RepoIndexService
 import de.pdenis.repoleap.search.RepoMatcher
 import de.pdenis.repoleap.settings.RepoLeapSettings
+import de.pdenis.repoleap.settings.SortMode
 import de.pdenis.repoleap.ui.RepoActionHost
 import de.pdenis.repoleap.ui.RepoActionsProvider
 import de.pdenis.repoleap.ui.RepoDialogs
@@ -124,6 +125,25 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
                 RepoLeapBundle.message("action.unpin"),
                 popup.actionsForTest().single { it.id == RepoActionsProvider.ID_PIN }.text,
             )
+        }
+    }
+
+    fun testSortModeChosenInThePopupIsRememberedAndKeepsPinnedOnTop() {
+        val state = RepoLeapSettings.getInstance().state
+        val before = state.sortMode
+        try {
+            withPopup(repos("b-repo", "C-repo", "a-repo")) { popup ->
+                popup.setSortModeForTest(SortMode.NAME)
+                assertEquals(SortMode.NAME, state.sortMode)
+                assertEquals(listOf("a-repo", "b-repo", "C-repo"), popup.visibleRepoNamesForTest())
+
+                popup.selectRepoForTest("C-repo")
+                popup.pressKeyForTest(KeyEvent.VK_TAB)
+                popup.runActionForTest(RepoActionsProvider.ID_PIN)
+                assertEquals(listOf("C-repo", "a-repo", "b-repo"), popup.visibleRepoNamesForTest())
+            }
+        } finally {
+            state.sortMode = before
         }
     }
 
