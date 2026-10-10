@@ -167,9 +167,13 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
 
     fun testAClickWhileAToolbarMenuIsOpenOnlyClosesTheMenu() {
         withPopup(repos("alpha")) { popup ->
-            assertFalse("focus in the search field: the click opens", popup.closesMenuOnly(popup.searchEditorForTest()))
-            assertTrue("focus in a menu of the toolbar", popup.closesMenuOnly(javax.swing.JList<String>()))
-            assertTrue("no focus in the popup", popup.closesMenuOnly(null))
+            val source = popup.searchEditorForTest()
+            fun press(time: Long) = java.awt.event.MouseEvent(source, java.awt.event.MouseEvent.MOUSE_PRESSED, time, 0, 1, 1, 1, false)
+            assertFalse("no menu was closed: the click opens", popup.closesMenuOnly(press(1000)))
+            popup.menuClosedByPressForTest(2000)
+            assertTrue("the press that closed the menu", popup.closesMenuOnly(press(2000)))
+            assertTrue("a press before the (delayed) close", popup.closesMenuOnly(press(1990)))
+            assertFalse("the next click opens again", popup.closesMenuOnly(press(3000)))
         }
     }
 

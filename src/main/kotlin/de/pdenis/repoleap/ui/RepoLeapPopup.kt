@@ -1,6 +1,7 @@
 package de.pdenis.repoleap.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,6 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollPaneFactory
@@ -36,7 +39,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Component
-import java.awt.KeyboardFocusManager
+import java.awt.EventQueue
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -161,7 +164,7 @@ class RepoLeapPopup(
         list.cellRenderer = renderer
         list.addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
-                onPress()
+                onPress(e)
                 if (!ignoreClick && e.isPopupTrigger) showActionsAt(e)
             }
 
@@ -181,17 +184,40 @@ class RepoLeapPopup(
     /** Set on mouse press, valid until the next press: the current click must not open or run anything. */
     private var ignoreClick = false
 
-    private fun onPress() {
-        ignoreClick = closesMenuOnly(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
-        if (ignoreClick) searchField.textEditor.requestFocusInWindow()
+    /** `when` of the mouse press that closed a toolbar menu (Sort, Show), and when the menu was closed. */
+    private var menuClosingPress: Long? = null
+    private var menuClosedAt = 0L
+
+    private fun onPress(e: MouseEvent) {
+        ignoreClick = closesMenuOnly(e)
     }
 
     /**
-     * The lists are not focusable, so the focus is always in the search field - except while a menu of the toolbar
-     * (Sort, Show) is open. A click into the list then only closes that menu, like a click anywhere else would.
+     * The platform closes an open menu on the mouse press and then still delivers that press to the list below.
+     * Such a click only closes the menu, like a click anywhere else. A press that happened before the menu was
+     * closed is that press, even if the menu was closed a little later (the current event is unknown then).
      */
-    internal fun closesMenuOnly(focusOwner: Component?): Boolean =
-        focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, panel)
+    internal fun closesMenuOnly(press: MouseEvent): Boolean = press.`when` == menuClosingPress || press.`when` <= menuClosedAt
+
+    /** Opens [group] below the toolbar button and remembers which mouse press closed it. */
+    private inner class MenuAction(text: String, icon: Icon, private val group: ActionGroup) : DumbAwareAction(text, null, icon) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+        override fun actionPerformed(e: AnActionEvent) {
+            val menu = JBPopupFactory.getInstance().createActionGroupPopup(
+                null, group, e.dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
+            )
+            menu.addListener(object : JBPopupListener {
+                override fun onClosed(event: LightweightWindowEvent) {
+                    menuClosedAt = System.currentTimeMillis()
+                    menuClosingPress = (EventQueue.getCurrentEvent() as? MouseEvent)
+                        ?.takeIf { it.id == MouseEvent.MOUSE_PRESSED }?.`when`
+                }
+            })
+            val button = e.inputEvent?.component as? JComponent
+            if (button != null) menu.showUnderneathOf(button) else menu.showInCenterOf(panel)
+        }
+    }
 
     private fun showActionsAt(e: MouseEvent) {
         val row = rowAt(list, e) ?: return
@@ -204,7 +230,7 @@ class RepoLeapPopup(
         actionList.isFocusable = false
         actionList.cellRenderer = RepoActionCellRenderer()
         actionList.addMouseListener(object : MouseAdapter() {
-            override fun mousePressed(e: MouseEvent) = onPress()
+            override fun mousePressed(e: MouseEvent) = onPress(e)
 
             override fun mouseClicked(e: MouseEvent) {
                 if (ignoreClick || !SwingUtilities.isLeftMouseButton(e)) return
@@ -389,19 +415,17 @@ class RepoLeapPopup(
     }
 
     private fun createToolbar(): JComponent {
-        val sortGroup = DefaultActionGroup(RepoLeapBundle.message("popup.action.sort"), true).apply {
-            templatePresentation.icon = AllIcons.ObjectBrowser.Sorted
+        val sortGroup = DefaultActionGroup().apply {
             SortMode.entries.forEach { add(SortAction(it)) }
         }
-        val showGroup = DefaultActionGroup(RepoLeapBundle.message("popup.action.show"), true).apply {
-            templatePresentation.icon = AllIcons.Actions.Show
+        val showGroup = DefaultActionGroup().apply {
             add(RowDetailAction(RepoLeapBundle.message("settings.show.branch"), RepoLeapSettings.State::showBranch))
             add(RowDetailAction(RepoLeapBundle.message("settings.show.path"), RepoLeapSettings.State::showPath))
             add(RowDetailAction(RepoLeapBundle.message("settings.show.windowState"), RepoLeapSettings.State::showWindowState))
         }
         val group = DefaultActionGroup(
-            sortGroup,
-            showGroup,
+            MenuAction(RepoLeapBundle.message("popup.action.sort"), AllIcons.ObjectBrowser.Sorted, sortGroup),
+            MenuAction(RepoLeapBundle.message("popup.action.show"), AllIcons.Actions.Show, showGroup),
             PopupAction(RepoLeapBundle.message("popup.action.refresh"), AllIcons.Actions.Refresh) {
                 index.rescan()
                 updateEmptyText()
@@ -491,6 +515,12 @@ class RepoLeapPopup(
     @TestOnly
     internal fun setRowDetailForTest(property: KMutableProperty1<RepoLeapSettings.State, Boolean>, visible: Boolean) =
         setRowDetail(property, visible)
+
+    @TestOnly
+    internal fun menuClosedByPressForTest(time: Long) {
+        menuClosingPress = time
+        menuClosedAt = time
+    }
 
     @TestOnly
     internal fun searchEditorForTest(): Component = searchField.textEditor
