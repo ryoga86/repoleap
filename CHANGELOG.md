@@ -11,6 +11,8 @@
   Runs `git switch`, so nothing is forced: if local changes would be overwritten, git refuses and says why
 - Sort order for the popup: smart (as before), by name, recently opened first, or by path. Choose the default in
   the settings or switch with the sort button in the popup; pinned repositories always stay on top
+- Choose what is shown next to a repository's name in the popup: branch, path and window state (*Settings | Tools |
+  RepoLeap | Popup*)
 
 ### Fixed
 

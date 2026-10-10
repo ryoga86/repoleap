@@ -11,7 +11,11 @@ import java.awt.Color
 import javax.swing.JList
 
 /** Renders `name  branch  ~/path/to/name  ● other window` with highlighted matches and colored tags. */
-internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
+internal class RepoListCellRenderer(
+    private val showBranch: Boolean = true,
+    private val showPath: Boolean = true,
+    private val showWindowState: Boolean = true,
+) : ColoredListCellRenderer<RepoListItem>() {
 
     override fun customizeCellRenderer(
         list: JList<out RepoListItem>,
@@ -28,17 +32,19 @@ internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
             this, repo.name, value.match.nameRanges.toTextRanges(),
             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, NAME_HIGHLIGHT,
         )
-        repo.branch?.let {
+        repo.branch?.takeIf { showBranch }?.let {
             append("  ")
             appendKeepingColor(it, BRANCH)
         }
-        append("  ")
-        SpeedSearchUtil.appendColoredFragments(
-            this, repo.displayPath, value.match.pathRanges.toTextRanges(),
-            SimpleTextAttributes.GRAYED_ATTRIBUTES, PATH_HIGHLIGHT,
-        )
+        if (showPath) {
+            append("  ")
+            SpeedSearchUtil.appendColoredFragments(
+                this, repo.displayPath, value.match.pathRanges.toTextRanges(),
+                SimpleTextAttributes.GRAYED_ATTRIBUTES, PATH_HIGHLIGHT,
+            )
+        }
 
-        when (value.windowState) {
+        if (showWindowState) when (value.windowState) {
             WindowState.CURRENT -> appendTag(RepoLeapBundle.message("popup.tag.current"), CURRENT_WINDOW_TAG)
             WindowState.OTHER -> appendTag(RepoLeapBundle.message("popup.tag.open"), OPEN_TAG)
             WindowState.CLOSED -> Unit

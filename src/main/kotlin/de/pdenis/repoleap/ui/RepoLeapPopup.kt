@@ -101,7 +101,8 @@ class RepoLeapPopup(
             .toSet()
         currentProjectPath = project?.takeUnless { it.isDisposed }?.basePath?.let(::normalizePath)
 
-        setUpRepositoryList(RepoListCellRenderer())
+        val state = settings.state
+        setUpRepositoryList(RepoListCellRenderer(state.showBranch, state.showPath, state.showWindowState))
         setUpActionList()
         setUpSearchField()
 
