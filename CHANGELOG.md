@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- The popup shows the checked out branch of every repository (the short commit hash for a detached HEAD)
+- *Switch Branch…* in the actions (Tab): pick a local branch, or a remote one to create a local tracking branch.
+  Runs `git switch`, so nothing is forced: if local changes would be overwritten, git refuses and says why
+- Sort order for the popup: smart (as before), by name, recently opened first, or by path. Choose the default in
+  the settings or switch with the sort button in the popup; pinned repositories always stay on top
+- Choose what is shown next to a repository's name in the popup: branch, path and window state (*Settings | Tools |
+  RepoLeap | Popup*)
+
+### Fixed
+
+- Finding `git` no longer uses an IDE API that is scheduled for removal (future-proofing for IDE 2026.3 and later;
+  no change in behavior)
+- Windows: repository paths are shown in full (`C:\Users\...`) instead of the Unix-style `~\...` abbreviation
+
 ## [1.0.0] - 2026-09-25
 
 ### Added

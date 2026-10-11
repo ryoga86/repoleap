@@ -7,6 +7,12 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    ignore:
+      # The Kotlin version has to match the stdlib bundled with the oldest supported IDE (since-build 252 = 2025.2
+      # bundles Kotlin 2.1.20), see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html
+      # Raise it together with pluginSinceBuild in gradle.properties; patch releases stay enabled.
+      - dependency-name: "org.jetbrains.kotlin.jvm"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "develop"

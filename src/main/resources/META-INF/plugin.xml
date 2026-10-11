@@ -14,8 +14,8 @@
         <p><b>Leap to any local Git repository in a few keystrokes:</b> one shortcut, fuzzy search across all your
         repos, done. Stop digging through folders like it’s 1999.</p>
 
-        <p><img src="https://raw.githubusercontent.com/ryoga86/repoleap/main/docs/banner.png"
-            alt="RepoLeap" width="600" height="237"></p>
+        <p><img src="https://raw.githubusercontent.com/ryoga86/repoleap/main/docs/banner-github.png"
+            alt="RepoLeap" width="910" height="278"></p>
 
         <p><b>Option+Command+I</b> (macOS) or <b>Alt+Shift+P</b> (Windows/Linux) opens a search popup with every Git
         repository in the folders you configured. Type a few letters of the name or path, press <b>Enter</b> –
@@ -29,7 +29,9 @@
                 fuzzy on names, with highlighted matches</li>
             <li><b>Always the right order</b> – pinned repositories first, then the one in the current window,
                 then those open in other windows, then the rest; the best matches and recently opened repositories
-                lead within each group</li>
+                lead within each group. Or sort by name, path or recently opened instead</li>
+            <li><b>Branch at a glance</b> – every repository shows its checked out branch; switch to another local
+                or remote branch right from the popup</li>
             <li><b>Jump instead of reopening</b> – open repositories are marked (<i>current window</i>,
                 <i>other window</i>) and choosing one brings exactly that window to the front</li>
             <li><b>macOS window tabs</b> – bring a repository that is open in another window into the current window
@@ -47,6 +49,7 @@
                 Bitbucket Server / Data Center, Azure DevOps, AWS CodeCommit, SourceHut, or your own rules</li>
             <li><b>Close the project</b>, show the folder in the system file manager, copy the path</li>
             <li><b>Pin</b> favorites to the top, <b>hide</b> repositories you never need</li>
+            <li><b>Switch Branch</b> – via <code>git switch</code>: nothing is forced, local changes are never lost</li>
             <li><b>Rename</b> the folder or <b>move it to the Trash</b> – with a warning about everything
                 that would otherwise be lost (uncommitted changes, unpushed commits, stashes, no remote)</li>
         </ul>

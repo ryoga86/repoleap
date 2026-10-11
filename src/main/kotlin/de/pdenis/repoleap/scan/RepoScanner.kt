@@ -1,5 +1,6 @@
 package de.pdenis.repoleap.scan
 
+import de.pdenis.repoleap.git.GitRepoReader
 import java.io.IOException
 import java.nio.file.DirectoryIteratorException
 import java.nio.file.Files
@@ -25,6 +26,8 @@ import java.nio.file.Paths
 class RepoScanner(
     private val options: ScanOptions,
     private val homeDir: String = System.getProperty("user.home"),
+    /** `~` for the home folder is a Unix convention; Windows users expect `C:\Users\...`. */
+    private val useTilde: Boolean = !System.getProperty("os.name").startsWith("Windows"),
     /** Called regularly; throw to abort (e.g. a cancelled coroutine). */
     private val checkCanceled: () -> Unit = {},
 ) {
@@ -85,8 +88,15 @@ class RepoScanner(
     private fun entryFor(dir: Path): RepoEntry {
         val absolute = dir.toAbsolutePath().normalize()
         val name = absolute.fileName?.toString() ?: absolute.toString()
-        return RepoEntry(name = name, path = absolute, displayPath = abbreviateHome(absolute.toString()))
+        return RepoEntry(
+            name = name,
+            path = absolute,
+            displayPath = abbreviateHome(absolute.toString()),
+            branch = headReader.readHeadLabel(absolute),
+        )
     }
+
+    private val headReader = GitRepoReader(null)
 
     private fun resolveRoot(raw: String): Path? {
         val trimmed = raw.trim()
@@ -104,7 +114,7 @@ class RepoScanner(
     }
 
     private fun abbreviateHome(path: String): String {
-        if (homeDir.isEmpty()) return path
+        if (!useTilde || homeDir.isEmpty()) return path
         return when {
             path == homeDir -> "~"
             path.startsWith(homeDir) && path.length > homeDir.length && isSeparator(path[homeDir.length]) ->

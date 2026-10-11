@@ -1,5 +1,8 @@
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 
 plugins {
     id("java")
@@ -87,12 +90,27 @@ intellijPlatform {
 
     // https://plugins.jetbrains.com/docs/intellij/verifying-plugin-compatibility.html
     pluginVerification {
+        // The defaults (compatibility problems, internal and override-only API) plus API that is marked as
+        // scheduled for removal: the Marketplace reports it for early access builds, so fail here before an upload
+        failureLevel = listOf(
+            VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+            VerifyPluginTask.FailureLevel.INTERNAL_API_USAGES,
+            VerifyPluginTask.FailureLevel.OVERRIDE_ONLY_API_USAGES,
+            VerifyPluginTask.FailureLevel.SCHEDULED_FOR_REMOVAL_API_USAGES,
+        )
+
         ides {
             if (localIdePath.isPresent) {
                 // Fast local check against the installed IDE (no downloads)
                 local(file(localIdePath.get()))
             } else {
                 recommended()
+                // Latest early access build (2026.3 = 263 and newer): API is marked as scheduled for removal there first
+                select {
+                    types = listOf(IntelliJPlatformType.IntellijIdea)
+                    channels = listOf(ProductRelease.Channel.EAP)
+                    sinceBuild = "263"
+                }
             }
         }
     }
@@ -118,7 +136,7 @@ if (localIdePath.isPresent) {
 
 tasks {
     wrapper {
-        gradleVersion = "9.5.0"
+        gradleVersion = "9.8.0"
     }
 
     publishPlugin {

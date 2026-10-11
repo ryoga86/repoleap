@@ -178,6 +178,73 @@ class GitRepoReaderTest {
     }
 
     @Test
+    fun `head label is the branch or the short hash of a detached head`() {
+        val repo = tmp.newFolder("head").toPath()
+        val gitDir = Files.createDirectories(repo.resolve(".git"))
+        val reader = GitRepoReader(null)
+        assertNull("no HEAD file", reader.readHeadLabel(repo))
+        Files.writeString(gitDir.resolve("HEAD"), "ref: refs/heads/feature/x\n")
+        assertEquals("feature/x", reader.readHeadLabel(repo))
+        Files.writeString(gitDir.resolve("HEAD"), "0123456789abcdef0123456789abcdef01234567\n")
+        assertEquals("0123456", reader.readHeadLabel(repo))
+        assertNull("not a repository", reader.readHeadLabel(tmp.newFolder("plain-folder").toPath()))
+    }
+
+    @Test
+    fun `branch list contains local branches and remote branches without a local one`() {
+        val list = GitBranches.parse(
+            """
+            refs/heads/main
+            refs/heads/Feature
+            refs/remotes/origin/HEAD
+            refs/remotes/origin/main
+            refs/remotes/origin/release/1.0
+            refs/remotes/fork/main
+            refs/remotes/fork/experiment
+            """.trimIndent(),
+            current = "main",
+        )
+        assertEquals("main", list.current)
+        assertEquals(listOf("Feature", "main"), list.local)
+        assertEquals(listOf("fork/experiment", "origin/release/1.0"), list.remoteOnly)
+    }
+
+    @Test
+    fun `switches to local and remote branches and refuses to overwrite local changes`() {
+        assumeTrue("git is not installed", git != null)
+        val work = createWorkingCopy() // on main with an uncommitted change of a.txt; local "feature" exists
+        val other = tmp.root.toPath().resolve("other")
+        git(tmp.root.toPath(), "clone", "-q", tmp.root.toPath().resolve("origin.git").toString(), other.toString())
+        git(other, "checkout", "-q", "-b", "remote-only")
+        commit(other, "r.txt", "r", "remote work")
+        git(other, "push", "-q", "origin", "remote-only")
+        git(work, "fetch", "-q", "origin")
+
+        val branches = GitBranches(git!!)
+        val list = branches.list(work).getOrThrow()
+        assertEquals("main", list.current)
+        assertEquals(listOf("feature", "main"), list.local)
+        assertEquals(listOf("origin/remote-only"), list.remoteOnly)
+
+        // a.txt is the same on both branches, so its uncommitted change is carried over
+        assertNull(branches.switch(work, "feature", remoteOnly = false))
+        assertEquals("feature", GitRepoReader(null).readHeadLabel(work))
+
+        assertNull(branches.switch(work, "origin/remote-only", remoteOnly = true))
+        assertEquals("remote-only", GitRepoReader(null).readHeadLabel(work))
+        assertEquals("origin/remote-only", GitRepoReader(git).read(work).upstream)
+
+        // a change to a file that differs on the target branch -> git refuses, the branch stays
+        commit(work, "c.txt", "remote-only version", "touch c")
+        Files.writeString(work.resolve("c.txt"), "local edit")
+        val error = branches.switch(work, "feature", remoteOnly = false)
+        assertNotNull(error)
+        assertTrue(error!!, error.contains("overwritten"))
+        assertEquals("remote-only", GitRepoReader(null).readHeadLabel(work))
+        assertEquals("local edit", Files.readString(work.resolve("c.txt")))
+    }
+
+    @Test
     fun `status output with detached head and conflicts is parsed`() {
         val info = GitRepoReader(null).parseStatus(
             """

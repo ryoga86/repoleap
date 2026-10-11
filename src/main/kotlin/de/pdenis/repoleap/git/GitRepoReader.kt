@@ -1,14 +1,10 @@
 package de.pdenis.repoleap.git
 
 import java.io.IOException
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
-import java.util.concurrent.FutureTask
-import java.util.concurrent.TimeUnit
 
 /**
  * Reads [GitRepoInfo] by running the git executable (read-only commands, no network access).
@@ -126,6 +122,15 @@ class GitRepoReader(
         return GitRepoInfo(gitAvailable = false, branch = branch, headCommit = detachedHead, remotes = remotes)
     }
 
+    /**
+     * The checked out branch, or the short commit hash for a detached HEAD; `null` if HEAD can't be read.
+     * Reads one small file only - cheap enough to do for every repository during the scan.
+     */
+    fun readHeadLabel(repo: Path): String? {
+        val head = resolveGitDir(repo)?.let { readText(it.resolve("HEAD")) }?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return if (head.startsWith("ref: ")) head.removePrefix("ref: ").removePrefix("refs/heads/") else head.take(SHORT_HASH)
+    }
+
     private fun resolveGitDir(repo: Path): Path? {
         val dotGit = repo.resolve(".git")
         return when {
@@ -165,46 +170,12 @@ class GitRepoReader(
         null
     }
 
-    // --- process handling -------------------------------------------------------------------------------------
+    private val process = gitExecutable?.let { GitProcess(it, timeoutMillis) }
 
-    /** [exitCode] is -1 if git could not be started or timed out; [stderr] holds the reason then. */
-    private class Result(val exitCode: Int, val stdout: String, val stderr: String) {
-        fun errorText(): String = stderr.lineSequence().firstOrNull { it.isNotBlank() }?.trim() ?: "git exited with code $exitCode"
-    }
-
-    private fun run(repo: Path, vararg args: String): Result {
-        val command = listOf(gitExecutable!!, "-C", repo.toString()) + args
-        return try {
-            val process = ProcessBuilder(command)
-                .apply {
-                    environment()["GIT_TERMINAL_PROMPT"] = "0"
-                    environment()["GIT_OPTIONAL_LOCKS"] = "0"
-                    environment()["LC_ALL"] = "C"
-                }
-                .start()
-            process.outputStream.close()
-            val stdout = readAsync(process.inputStream)
-            val stderr = readAsync(process.errorStream)
-            if (!process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
-                process.destroyForcibly()
-                return Result(-1, "", "git did not respond within ${timeoutMillis / 1000} s")
-            }
-            Result(process.exitValue(), stdout.get(timeoutMillis, TimeUnit.MILLISECONDS), stderr.get(timeoutMillis, TimeUnit.MILLISECONDS))
-        } catch (e: InterruptedException) {
-            Thread.currentThread().interrupt()
-            Result(-1, "", "interrupted")
-        } catch (e: Exception) {
-            Result(-1, "", e.message ?: e.javaClass.simpleName)
-        }
-    }
-
-    private fun readAsync(stream: InputStream): FutureTask<String> {
-        val task = FutureTask { stream.use { it.readBytes().toString(StandardCharsets.UTF_8) } }
-        Thread(task, "RepoLeap git output reader").apply { isDaemon = true }.start()
-        return task
-    }
+    private fun run(repo: Path, vararg args: String): GitProcess.Result = process!!.run(repo, *args)
 
     companion object {
         const val DEFAULT_TIMEOUT_MILLIS = 10_000L
+        private const val SHORT_HASH = 7
     }
 }

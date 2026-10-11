@@ -27,6 +27,12 @@ class RepoLeapSettings : PersistentStateComponent<RepoLeapSettings.State> {
         var excludedFolderNames: String = DEFAULT_EXCLUDED_FOLDER_NAMES
         var skipHiddenFolders: Boolean = true
         var openMode: OpenMode = OpenMode.NEW_WINDOW
+        /** Set in the settings and with the sort button of the popup. */
+        var sortMode: SortMode = SortMode.SMART
+        /** Parts of a popup row next to the name. Hiding the path does not exclude it from the search. */
+        var showBranch: Boolean = true
+        var showPath: Boolean = true
+        var showWindowState: Boolean = true
         var recentRepos: MutableList<String> = mutableListOf()
         /** Repositories that are always listed first. */
         var pinnedRepos: MutableList<String> = mutableListOf()
