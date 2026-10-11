@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.ui.ActiveComponent
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollPaneFactory
@@ -40,6 +41,8 @@ import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Component
 import java.awt.EventQueue
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -130,6 +133,7 @@ class RepoLeapPopup(
             else -> RepoLeapBundle.message("popup.alt.thisWindow")
         }
 
+        val toolbar = createToolbar()
         val popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(panel, searchField.textEditor)
             .setTitle(RepoLeapBundle.message("popup.title"))
@@ -141,7 +145,8 @@ class RepoLeapPopup(
             .setCancelKeyEnabled(false) // Esc is handled in onKeyPressed (it only leaves the action view there)
             .setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, false)
             .setMinSize(JBUI.size(420, 240))
-            .setSettingButtons(createToolbar())
+            .setSettingButtons(toolbar)
+            .setCommandButton(Mirror(toolbar)) // the title is centered between the toolbar (left) and this (right)
             .setAdText(RepoLeapBundle.message("popup.ad", alternativeText), SwingConstants.LEFT)
             .createPopup()
         this.popup = popup
@@ -442,6 +447,24 @@ class RepoLeapPopup(
         }
     }
 
+    /**
+     * An empty box as wide as [like], so that the title of the popup is centered despite the toolbar next to it.
+     * The toolbar fills itself in the background, so the box follows its size.
+     */
+    private class Mirror(like: JComponent) : ActiveComponent {
+        private val box = object : JPanel() {
+            override fun getPreferredSize() = like.preferredSize
+        }.apply {
+            isOpaque = false
+            like.addComponentListener(object : ComponentAdapter() {
+                override fun componentResized(e: ComponentEvent) = revalidate()
+            })
+        }
+
+        override fun setActive(active: Boolean) = Unit
+        override fun getComponent(): JComponent = box
+    }
+
     private fun rowAt(list: JList<*>, e: MouseEvent): Int? {
         val row = list.locationToIndex(e.point)
         if (row < 0 || !list.getCellBounds(row, row).contains(e.point)) return null
@@ -483,6 +506,9 @@ class RepoLeapPopup(
 
     @TestOnly
     internal fun emptyTextForTest(): String = list.emptyText.text
+
+    @TestOnly
+    internal fun contentForTest(): JComponent = popup!!.content
 
     @TestOnly
     internal fun closeForTest() {
