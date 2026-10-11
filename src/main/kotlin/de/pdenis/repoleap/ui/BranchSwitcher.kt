@@ -95,16 +95,18 @@ internal object BranchSwitcher {
             }
 
             override fun onSuccess() {
-                val message = error
-                if (message != null) {
-                    Messages.showErrorDialog(project, RepoLeapBundle.message("branch.failed", item.name, message),
-                        RepoLeapBundle.message("branch.title", repo.name))
-                } else if (RepoOpener.findOpenProject(repo.path) != null) {
-                    // The files of an open project changed on disk - let the IDE see them right away
-                    LocalFileSystem.getInstance().refreshNioFiles(listOf(repo.path), true, true, null)
-                }
                 RepoIndexService.getInstance().rescan()
-                host.reopen(repo.path)
+                val message = error
+                if (message == null) {
+                    // Done - the popup stays closed. The files of an open project changed on disk: let the IDE see them right away
+                    if (RepoOpener.findOpenProject(repo.path) != null) {
+                        LocalFileSystem.getInstance().refreshNioFiles(listOf(repo.path), true, true, null)
+                    }
+                    return
+                }
+                Messages.showErrorDialog(project, RepoLeapBundle.message("branch.failed", item.name, message),
+                    RepoLeapBundle.message("branch.title", repo.name))
+                host.reopenActions(repo.path) // try another branch
             }
         }.queue()
     }
