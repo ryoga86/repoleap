@@ -1,5 +1,6 @@
 package de.pdenis.repoleap.scan
 
+import de.pdenis.repoleap.git.GitRepoReader
 import java.io.IOException
 import java.nio.file.DirectoryIteratorException
 import java.nio.file.Files
@@ -87,8 +88,15 @@ class RepoScanner(
     private fun entryFor(dir: Path): RepoEntry {
         val absolute = dir.toAbsolutePath().normalize()
         val name = absolute.fileName?.toString() ?: absolute.toString()
-        return RepoEntry(name = name, path = absolute, displayPath = abbreviateHome(absolute.toString()))
+        return RepoEntry(
+            name = name,
+            path = absolute,
+            displayPath = abbreviateHome(absolute.toString()),
+            branch = headReader.readHeadLabel(absolute),
+        )
     }
+
+    private val headReader = GitRepoReader(null)
 
     private fun resolveRoot(raw: String): Path? {
         val trimmed = raw.trim()

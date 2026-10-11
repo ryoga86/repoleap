@@ -7,7 +7,7 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
 | Punkt          | Wert                                                                                              |
 |----------------|---------------------------------------------------------------------------------------------------|
 | Name / ID      | `RepoLeap` / `de.pdenis.repoleap` (Marketplace-ID `34545`)                                        |
-| Version        | `1.0.0` (`gradle.properties` → `pluginVersion`)                                                   |
+| Version        | `1.1.0` (`gradle.properties` → `pluginVersion`)                                                   |
 | Kompatibilität | since-build 252 (2025.2), kein until-build                                                        |
 | Vendor         | Peter Denis, mail@pdenis.de (`gradle.properties` → `pluginVendor` + `plugin.xml`)                 |
 | Lizenz         | MIT (`LICENSE`)                                                                                   |
@@ -84,7 +84,8 @@ git commit -am "Release x.y.z" && git tag x.y.z && git push && git push --tags
   `@State(name = "RepoLeapSettings")` – sonst verlieren Nutzer Einstellungen bzw. eigene Shortcuts.
 - **Banner:** Die Plugin-Beschreibung lädt die Bilder live von `main`
   (`raw.githubusercontent.com/ryoga86/repoleap/main/docs/…`): `banner.png` (plugin.xml von 1.0.0) und
-  `banner-marketplace.png` (aktuelle Beschreibung). Auf `main` weder umbenennen noch löschen, solange eine
+  `banner-github.png` (ab 1.1.0, auch im README). `banner-marketplace.png` wird derzeit nicht verwendet. Auf `main`
+  weder umbenennen noch löschen, solange eine
   Version sie verwendet. Änderungen am Bild werden mit dem Merge nach `main` sofort sichtbar – auch für bereits
   veröffentlichte Versionen. Repo public lassen, Branch `main` nicht umbenennen.
 - **Signatur-Schlüssel** (`private_encrypted.pem`, `chain.crt`, `password.txt`) im Passwort-Manager sichern, nie

@@ -13,6 +13,7 @@ import de.pdenis.repoleap.scan.RepoEntry
 import de.pdenis.repoleap.scan.RepoIndexService
 import de.pdenis.repoleap.search.RepoMatcher
 import de.pdenis.repoleap.settings.RepoLeapSettings
+import de.pdenis.repoleap.settings.SortMode
 import de.pdenis.repoleap.ui.RepoActionHost
 import de.pdenis.repoleap.ui.RepoActionsProvider
 import de.pdenis.repoleap.ui.RepoDialogs
@@ -73,7 +74,7 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             assertEquals(
                 listOf(
                     RepoActionsProvider.ID_OPEN, RepoActionsProvider.ID_OPEN_ALTERNATIVE, RepoActionsProvider.ID_CLOSE,
-                    RepoActionsProvider.ID_INFO,
+                    RepoActionsProvider.ID_INFO, RepoActionsProvider.ID_SWITCH_BRANCH,
                     RepoActionsProvider.ID_REVEAL, RepoActionsProvider.ID_COPY_PATH, RepoActionsProvider.ID_BROWSER,
                     RepoActionsProvider.ID_PIN, RepoActionsProvider.ID_HIDE, RepoActionsProvider.ID_RENAME,
                     RepoActionsProvider.ID_TRASH,
@@ -124,6 +125,55 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
                 RepoLeapBundle.message("action.unpin"),
                 popup.actionsForTest().single { it.id == RepoActionsProvider.ID_PIN }.text,
             )
+        }
+    }
+
+    fun testSortModeChosenInThePopupIsRememberedAndKeepsPinnedOnTop() {
+        val state = RepoLeapSettings.getInstance().state
+        val before = state.sortMode
+        try {
+            withPopup(repos("b-repo", "C-repo", "a-repo")) { popup ->
+                popup.setSortModeForTest(SortMode.NAME)
+                assertEquals(SortMode.NAME, state.sortMode)
+                assertEquals(listOf("a-repo", "b-repo", "C-repo"), popup.visibleRepoNamesForTest())
+
+                popup.selectRepoForTest("C-repo")
+                popup.pressKeyForTest(KeyEvent.VK_TAB)
+                popup.runActionForTest(RepoActionsProvider.ID_PIN)
+                assertEquals(listOf("C-repo", "a-repo", "b-repo"), popup.visibleRepoNamesForTest())
+            }
+        } finally {
+            state.sortMode = before
+        }
+    }
+
+    fun testRowDetailsSwitchedInThePopupAreSavedAndShownAtOnce() {
+        val state = RepoLeapSettings.getInstance().state
+        val before = state.showPath
+        try {
+            state.showPath = true
+            withPopup(repos("alpha")) { popup ->
+                assertTrue(popup.rendererForTest().showPath)
+                popup.setRowDetailForTest(RepoLeapSettings.State::showPath, false)
+                assertFalse(state.showPath)
+                assertFalse(popup.rendererForTest().showPath)
+                popup.setSearchTextForTest("repoleap-actions") // hidden path is still searched
+                assertEquals(listOf("alpha"), popup.visibleRepoNamesForTest())
+            }
+        } finally {
+            state.showPath = before
+        }
+    }
+
+    fun testAClickWhileAToolbarMenuIsOpenOnlyClosesTheMenu() {
+        withPopup(repos("alpha")) { popup ->
+            val source = popup.searchEditorForTest()
+            fun press(time: Long) = java.awt.event.MouseEvent(source, java.awt.event.MouseEvent.MOUSE_PRESSED, time, 0, 1, 1, 1, false)
+            assertFalse("no menu was closed: the click opens", popup.closesMenuOnly(press(1000)))
+            popup.menuClosedByPressForTest(2000)
+            assertTrue("the press that closed the menu", popup.closesMenuOnly(press(2000)))
+            assertTrue("a press before the (delayed) close", popup.closesMenuOnly(press(1990)))
+            assertFalse("the next click opens again", popup.closesMenuOnly(press(3000)))
         }
     }
 

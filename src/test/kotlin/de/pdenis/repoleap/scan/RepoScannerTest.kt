@@ -105,6 +105,14 @@ class RepoScannerTest {
     }
 
     @Test
+    fun `the checked out branch is read during the scan`() {
+        val dir = repo("with-branch")
+        Files.writeString(dir.resolve(".git/HEAD"), "ref: refs/heads/develop\n")
+        repo("without-head")
+        assertEquals(listOf("develop", null), scan().map { it.branch })
+    }
+
+    @Test
     fun `home directory is expanded and abbreviated`() {
         repo("code/my-repo")
         val entries = scan(roots = listOf("~/code"), home = root.toString())

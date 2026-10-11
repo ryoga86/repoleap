@@ -27,7 +27,11 @@ path, press **Enter** – the repository opens as a project.
   (`platform api`), fuzzy matching on names (`bilserv` → `billing-service`), highlighted matches
 - **Fixed order** that no search result breaks: pinned repositories, then the one in the **current window**,
   then those open in **other windows**, then the rest; inside each group the best match and recently opened
-  repositories come first
+  repositories come first. Alternatively sort **by name**, **by path** or **recently opened first** (sort button in
+  the popup or *Settings | Tools | RepoLeap | Popup*); pinned repositories always stay on top
+- The **checked out branch** is shown for every repository (short commit hash for a detached HEAD)
+- **Choose what each row shows** next to the name: branch, path, window state (eye button in the popup or the
+  settings); a hidden path is still searched
 - Open repositories are marked (🟢 **current window**, 🔵 **other window**) – choosing one brings exactly
   that window to the front
 - **macOS window tabs**: bring a repository that is open in another window into the current window as a tab
@@ -36,9 +40,11 @@ path, press **Enter** – the repository opens as a project.
   *Prefer tabs when opening documents: Always*. To take a tab out again, use the tab's context menu in the IDE.
 - **Open mode**: new window (default), current window, or the IDE setting *Open project in*;
   **Shift+Enter** uses the alternative
-- **Actions per repository** (**Tab** or right click): close the project, show info, show the folder in the system
-  file manager (Finder / Explorer / …), copy path, open the remote in the browser, pin to top, hide from the list,
-  rename the folder, move it to the Trash
+- **Actions per repository** (**Tab** or right click): close the project, show info, switch branch, show the folder
+  in the system file manager (Finder / Explorer / …), copy path, open the remote in the browser, pin to top, hide
+  from the list, rename the folder, move it to the Trash
+  - **Switch Branch**: local branches, and remote branches that create a local tracking branch; runs `git switch`,
+    so nothing is forced – if local changes would be overwritten, git refuses and the reason is shown
   - **Remote in browser** knows GitHub, GitLab (incl. subgroups), Gitea/Forgejo, Bitbucket Cloud,
     self-hosted Bitbucket Server / Data Center (incl. context paths and personal `~user` repos), Azure DevOps,
     AWS CodeCommit and SourceHut; for anything else, add a rule (host → type or URL template) in the settings
@@ -63,7 +69,8 @@ path, press **Enter** – the repository opens as a project.
 
 In the actions: ↑ ↓ select, **Enter** runs the action, **Esc**, **Tab** or **←** go back, typing searches again.
 
-Git information is read with the `git` executable found on the `PATH` (read-only commands, no network access).
+Git information is read with the `git` executable found on the `PATH` (read-only commands, no network access);
+the only command that changes a repository is `git switch` when you choose *Switch Branch*.
 Without git, branch and remotes are read from the `.git` folder.
 
 The action is also available via *File | Open Repository…*, on the Welcome screen and in *Find Action*.

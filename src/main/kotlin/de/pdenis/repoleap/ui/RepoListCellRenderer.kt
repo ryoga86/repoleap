@@ -10,8 +10,12 @@ import de.pdenis.repoleap.RepoLeapBundle
 import java.awt.Color
 import javax.swing.JList
 
-/** Renders `name  ~/path/to/name  ● other window` with highlighted matches and colored tags. */
-internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
+/** Renders `name  branch  ~/path/to/name  ● other window` with highlighted matches and colored tags. */
+internal class RepoListCellRenderer(
+    var showBranch: Boolean = true,
+    var showPath: Boolean = true,
+    var showWindowState: Boolean = true,
+) : ColoredListCellRenderer<RepoListItem>() {
 
     override fun customizeCellRenderer(
         list: JList<out RepoListItem>,
@@ -28,13 +32,19 @@ internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
             this, repo.name, value.match.nameRanges.toTextRanges(),
             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, NAME_HIGHLIGHT,
         )
-        append("  ")
-        SpeedSearchUtil.appendColoredFragments(
-            this, repo.displayPath, value.match.pathRanges.toTextRanges(),
-            SimpleTextAttributes.GRAYED_ATTRIBUTES, PATH_HIGHLIGHT,
-        )
+        repo.branch?.takeIf { showBranch }?.let {
+            append("  ")
+            appendKeepingColor(it, BRANCH)
+        }
+        if (showPath) {
+            append("  ")
+            SpeedSearchUtil.appendColoredFragments(
+                this, repo.displayPath, value.match.pathRanges.toTextRanges(),
+                SimpleTextAttributes.GRAYED_ATTRIBUTES, PATH_HIGHLIGHT,
+            )
+        }
 
-        when (value.windowState) {
+        if (showWindowState) when (value.windowState) {
             WindowState.CURRENT -> appendTag(RepoLeapBundle.message("popup.tag.current"), CURRENT_WINDOW_TAG)
             WindowState.OTHER -> appendTag(RepoLeapBundle.message("popup.tag.open"), OPEN_TAG)
             WindowState.CLOSED -> Unit
@@ -43,19 +53,22 @@ internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
 
     private fun appendTag(text: String, attributes: SimpleTextAttributes) {
         append("   ")
-        val tag = "$TAG_BULLET $text"
-        // ColoredListCellRenderer paints every fragment of the selected row in the selection color. Keep the tag color
+        appendKeepingColor("$TAG_BULLET $text", attributes)
+    }
+
+    private fun appendKeepingColor(text: String, attributes: SimpleTextAttributes) {
+        // ColoredListCellRenderer paints every fragment of the selected row in the selection color. Keep the color
         // on the selected row as well - unless it would be hard to read on the theme's selection background.
         val selectionBackground = background
         val keepColor = mySelected && selectionBackground != null &&
             contrastRatio(attributes.fgColor, selectionBackground) >= MIN_TAG_CONTRAST
         if (!keepColor) {
-            append(tag, attributes)
+            append(text, attributes)
             return
         }
         mySelected = false
         try {
-            append(tag, attributes)
+            append(text, attributes)
         } finally {
             mySelected = true
         }
@@ -97,6 +110,11 @@ internal class RepoListCellRenderer : ColoredListCellRenderer<RepoListItem>() {
         val OPEN_TAG = SimpleTextAttributes(
             SimpleTextAttributes.STYLE_PLAIN,
             JBColor.namedColor("RepoLeap.Popup.openForeground", JBColor(0x3574F0, 0x6B9BFA)),
+        )
+        // Purple from the IntelliJ palette, as git branches are shown in the IDE's VCS widgets
+        val BRANCH = SimpleTextAttributes(
+            SimpleTextAttributes.STYLE_PLAIN,
+            JBColor.namedColor("RepoLeap.Popup.branchForeground", JBColor(0x834DF0, 0xA571E6)),
         )
     }
 }

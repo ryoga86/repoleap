@@ -159,6 +159,9 @@ internal class RepoActionsProvider(
             RepoAction(ID_INFO, RepoLeapBundle.message("action.info"), AllIcons.General.Information) {
                 host.closeThen { RepoDialogs.showInfo(project, item.repo, host) }
             },
+            RepoAction(ID_SWITCH_BRANCH, RepoLeapBundle.message("action.switchBranch"), AllIcons.Vcs.Branch, hint = repo.branch) {
+                host.closeThen { BranchSwitcher.show(project, item.repo, host) }
+            },
             RepoAction(
                 ID_REVEAL,
                 RevealFileAction.getActionName(),
@@ -233,6 +236,7 @@ internal class RepoActionsProvider(
         const val ID_MERGE = "merge"
         const val ID_CLOSE = "close"
         const val ID_INFO = "info"
+        const val ID_SWITCH_BRANCH = "switchBranch"
         const val ID_REVEAL = "reveal"
         const val ID_COPY_PATH = "copyPath"
         const val ID_BROWSER = "browser"

@@ -136,6 +136,19 @@ class RepoLeapPlatformTest : BasePlatformTestCase() {
         assertEquals(Color.WHITE, selectedTagColor(Color(0x2675BF)))
     }
 
+    fun testBranchPathAndWindowStateCanBeHidden() {
+        val entry = RepoEntry("repo", Path.of("/repos/repo"), "/repos/repo", branch = "develop")
+        val item = RepoListItem(entry, RepoMatcher.Result(0, emptyList(), emptyList()), 0, windowState = WindowState.OTHER)
+        fun texts(renderer: RepoListCellRenderer): List<String> {
+            val iterator = (renderer.getListCellRendererComponent(JBList(), item, 0, false, false) as SimpleColoredComponent).iterator()
+            return buildList { while (iterator.hasNext()) add(iterator.next().trim()) }.filter { it.isNotEmpty() }
+        }
+        val tag = "\u25CF " + RepoLeapBundle.message("popup.tag.open")
+        assertEquals(listOf("repo", "develop", "/repos/repo", tag), texts(RepoListCellRenderer()))
+        assertEquals(listOf("repo", "/repos/repo"), texts(RepoListCellRenderer(showBranch = false, showWindowState = false)))
+        assertEquals(listOf("repo", "develop", tag), texts(RepoListCellRenderer(showPath = false)))
+    }
+
     fun testIndexServiceScansConfiguredRootsInBackground() {
         val root = FileUtil.createTempDirectory("repoleap", null).toPath()
         Files.createDirectories(root.resolve("group/my-repo/.git"))

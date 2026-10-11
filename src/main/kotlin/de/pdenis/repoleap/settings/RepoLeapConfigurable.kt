@@ -87,8 +87,27 @@ class RepoLeapConfigurable : BoundConfigurable(RepoLeapBundle.message("settings.
                 }
             }
 
+            group(RepoLeapBundle.message("settings.group.popup")) {
+                buttonsGroup(RepoLeapBundle.message("settings.sortMode.label")) {
+                    SortMode.entries.forEach { mode ->
+                        row { radioButton(mode.displayName, mode) }
+                    }
+                }.bind(state::sortMode)
+                row {
+                    comment(RepoLeapBundle.message("settings.sortMode.comment"))
+                }
+                row(RepoLeapBundle.message("settings.show.label")) {
+                    checkBox(RepoLeapBundle.message("settings.show.branch")).bindSelected(state::showBranch)
+                    checkBox(RepoLeapBundle.message("settings.show.path")).bindSelected(state::showPath)
+                    checkBox(RepoLeapBundle.message("settings.show.windowState")).bindSelected(state::showWindowState)
+                }
+                row {
+                    comment(RepoLeapBundle.message("settings.show.comment"))
+                }
+            }
+
             group(RepoLeapBundle.message("settings.group.opening")) {
-                buttonsGroup {
+                buttonsGroup(RepoLeapBundle.message("settings.openMode.label")) {
                     OpenMode.entries.forEach { mode ->
                         row { radioButton(mode.displayName, mode) }
                     }
