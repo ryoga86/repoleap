@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Order of the actions (Tab): *Switch Branch…* and *Pin to Top* come right after *Close*, *Show Info…* moved behind
+  *Open Remote in Browser*
+
 ### Fixed
 
 - *Switch Branch…* did nothing after picking a branch: the choice was read too early and the action list simply

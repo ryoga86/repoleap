@@ -159,11 +159,16 @@ internal class RepoActionsProvider(
                     host.reopen(null)
                 }
             },
-            RepoAction(ID_INFO, RepoLeapBundle.message("action.info"), AllIcons.General.Information) {
-                host.closeThen { RepoDialogs.showInfo(project, item.repo, host) }
-            },
             RepoAction(ID_SWITCH_BRANCH, RepoLeapBundle.message("action.switchBranch"), AllIcons.Vcs.Branch, hint = repo.branch) {
                 host.closeThen { BranchSwitcher.show(project, item.repo, host) }
+            },
+            RepoAction(
+                ID_PIN,
+                if (pinned) RepoLeapBundle.message("action.unpin") else RepoLeapBundle.message("action.pin"),
+                AllIcons.General.Pin_tab,
+            ) {
+                settings.setPinned(repo.pathString, !pinned)
+                host.backToRepositories()
             },
             RepoAction(
                 ID_REVEAL,
@@ -176,13 +181,8 @@ internal class RepoActionsProvider(
                 host.closeThen {}
             },
             browserAction(remote, onUpdate),
-            RepoAction(
-                ID_PIN,
-                if (pinned) RepoLeapBundle.message("action.unpin") else RepoLeapBundle.message("action.pin"),
-                AllIcons.General.Pin_tab,
-            ) {
-                settings.setPinned(repo.pathString, !pinned)
-                host.backToRepositories()
+            RepoAction(ID_INFO, RepoLeapBundle.message("action.info"), AllIcons.General.Information) {
+                host.closeThen { RepoDialogs.showInfo(project, item.repo, host) }
             },
             RepoAction(ID_HIDE, RepoLeapBundle.message("action.hide"), AllIcons.General.HideToolWindow,
                 hint = RepoLeapBundle.message("action.hide.hint")) {

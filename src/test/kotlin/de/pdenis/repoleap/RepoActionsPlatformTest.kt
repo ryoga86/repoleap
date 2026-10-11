@@ -74,9 +74,9 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             assertEquals(
                 listOf(
                     RepoActionsProvider.ID_OPEN, RepoActionsProvider.ID_OPEN_ALTERNATIVE, RepoActionsProvider.ID_CLOSE,
-                    RepoActionsProvider.ID_INFO, RepoActionsProvider.ID_SWITCH_BRANCH,
+                    RepoActionsProvider.ID_SWITCH_BRANCH, RepoActionsProvider.ID_PIN,
                     RepoActionsProvider.ID_REVEAL, RepoActionsProvider.ID_COPY_PATH, RepoActionsProvider.ID_BROWSER,
-                    RepoActionsProvider.ID_PIN, RepoActionsProvider.ID_HIDE, RepoActionsProvider.ID_RENAME,
+                    RepoActionsProvider.ID_INFO, RepoActionsProvider.ID_HIDE, RepoActionsProvider.ID_RENAME,
                     RepoActionsProvider.ID_TRASH,
                 ),
                 popup.actionsForTest().map { it.id },
