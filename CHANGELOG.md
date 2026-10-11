@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-11
+
 ### Changed
 
 - The branch list of *Switch Branch…* has a search field on top with the same fuzzy search and highlighting as the
@@ -62,6 +64,7 @@
   Azure DevOps, AWS CodeCommit and SourceHut; self-hosted Bitbucket Servers with a neutral host name are
   recognized by asking the server once (can be switched off), custom rules per host in the settings
 
-[Unreleased]: https://github.com/ryoga86/repoleap/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/ryoga86/repoleap/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/ryoga86/repoleap/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/ryoga86/repoleap/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/ryoga86/repoleap/commits/1.0.0
