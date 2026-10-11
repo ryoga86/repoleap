@@ -10,12 +10,44 @@ import de.pdenis.repoleap.RepoLeapBundle
 import java.awt.Color
 import javax.swing.JList
 
+/** A list renderer with colored `● tag` fragments (green "current window", ...). */
+internal abstract class TaggedListCellRenderer<T> : ColoredListCellRenderer<T>() {
+
+    protected fun appendTag(text: String, attributes: SimpleTextAttributes) {
+        append("   ")
+        appendKeepingColor("$TAG_BULLET $text", attributes)
+    }
+
+    protected fun appendKeepingColor(text: String, attributes: SimpleTextAttributes) {
+        // ColoredListCellRenderer paints every fragment of the selected row in the selection color. Keep the color
+        // on the selected row as well - unless it would be hard to read on the theme's selection background.
+        val selectionBackground = background
+        val keepColor = mySelected && selectionBackground != null &&
+            RepoListCellRenderer.contrastRatio(attributes.fgColor, selectionBackground) >= MIN_TAG_CONTRAST
+        if (!keepColor) {
+            append(text, attributes)
+            return
+        }
+        mySelected = false
+        try {
+            append(text, attributes)
+        } finally {
+            mySelected = true
+        }
+    }
+
+    private companion object {
+        const val TAG_BULLET = "\u25CF"
+        const val MIN_TAG_CONTRAST = 3.0
+    }
+}
+
 /** Renders `name  branch  ~/path/to/name  ● other window` with highlighted matches and colored tags. */
 internal class RepoListCellRenderer(
     var showBranch: Boolean = true,
     var showPath: Boolean = true,
     var showWindowState: Boolean = true,
-) : ColoredListCellRenderer<RepoListItem>() {
+) : TaggedListCellRenderer<RepoListItem>() {
 
     override fun customizeCellRenderer(
         list: JList<out RepoListItem>,
@@ -51,35 +83,9 @@ internal class RepoListCellRenderer(
         }
     }
 
-    private fun appendTag(text: String, attributes: SimpleTextAttributes) {
-        append("   ")
-        appendKeepingColor("$TAG_BULLET $text", attributes)
-    }
-
-    private fun appendKeepingColor(text: String, attributes: SimpleTextAttributes) {
-        // ColoredListCellRenderer paints every fragment of the selected row in the selection color. Keep the color
-        // on the selected row as well - unless it would be hard to read on the theme's selection background.
-        val selectionBackground = background
-        val keepColor = mySelected && selectionBackground != null &&
-            contrastRatio(attributes.fgColor, selectionBackground) >= MIN_TAG_CONTRAST
-        if (!keepColor) {
-            append(text, attributes)
-            return
-        }
-        mySelected = false
-        try {
-            append(text, attributes)
-        } finally {
-            mySelected = true
-        }
-    }
-
     private fun List<IntRange>.toTextRanges(): List<TextRange> = map { TextRange(it.first, it.last + 1) }
 
     internal companion object {
-        private const val TAG_BULLET = "\u25CF"
-        private const val MIN_TAG_CONTRAST = 3.0
-
         /** WCAG contrast ratio (1..21) between two colors. */
         internal fun contrastRatio(a: Color, b: Color): Double {
             val la = relativeLuminance(a)
@@ -95,7 +101,7 @@ internal class RepoListCellRenderer(
             return 0.2126 * channel(c.red) + 0.7152 * channel(c.green) + 0.0722 * channel(c.blue)
         }
 
-        private val NAME_HIGHLIGHT = SimpleTextAttributes(
+        internal val NAME_HIGHLIGHT = SimpleTextAttributes(
             SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SEARCH_MATCH, null,
         )
         private val PATH_HIGHLIGHT = SimpleTextAttributes(

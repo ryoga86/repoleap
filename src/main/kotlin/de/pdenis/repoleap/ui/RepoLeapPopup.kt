@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.ui.ActiveComponent
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollPaneFactory
@@ -40,6 +41,8 @@ import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Component
 import java.awt.EventQueue
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -70,6 +73,8 @@ class RepoLeapPopup(
     private val initialQuery: String = "",
     /** Repository to select once it is listed, e.g. after a rename. */
     initialSelection: Path? = null,
+    /** Show the actions of [initialSelection] right away (once it is listed) with this one selected, instead of the list. */
+    private val initialActionId: String? = null,
 ) {
 
     private enum class Mode { REPOS, ACTIONS }
@@ -98,6 +103,7 @@ class RepoLeapPopup(
         override fun open(item: RepoListItem, alternative: Boolean) = this@RepoLeapPopup.open(item, alternative)
         override fun closeThen(block: () -> Unit) = this@RepoLeapPopup.closeThen(block)
         override fun reopen(selection: Path?) = this@RepoLeapPopup.reopen(selection)
+        override fun reopenActions(repo: Path, actionId: String?) = this@RepoLeapPopup.reopen(repo, actionId)
         override fun backToRepositories() = this@RepoLeapPopup.backToRepositories()
     }
     private val actionsProvider = RepoActionsProvider(project, host)
@@ -130,6 +136,7 @@ class RepoLeapPopup(
             else -> RepoLeapBundle.message("popup.alt.thisWindow")
         }
 
+        val toolbar = createToolbar()
         val popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(panel, searchField.textEditor)
             .setTitle(RepoLeapBundle.message("popup.title"))
@@ -141,14 +148,18 @@ class RepoLeapPopup(
             .setCancelKeyEnabled(false) // Esc is handled in onKeyPressed (it only leaves the action view there)
             .setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, false)
             .setMinSize(JBUI.size(420, 240))
-            .setSettingButtons(createToolbar())
+            .setSettingButtons(toolbar)
+            .setCommandButton(Mirror(toolbar)) // the title is centered between the toolbar (left) and this (right)
             .setAdText(RepoLeapBundle.message("popup.ad", alternativeText), SwingConstants.LEFT)
             .createPopup()
         this.popup = popup
 
         index.addListener(popup) { refilter(keepSelection = true) }
         searchField.text = initialQuery
+        val wanted = pendingSelection
         refilter(keepSelection = false)
+        // Only if the repository is listed already (cached); otherwise the list stays, with it selected once it appears
+        if (initialActionId != null && list.selectedValue?.repo?.path == wanted) showActions(initialActionId)
         index.rescan() // show the cached list immediately, refresh it in the background
 
         if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project)
@@ -345,7 +356,7 @@ class RepoLeapPopup(
 
     // --- action view ------------------------------------------------------------------------------------------
 
-    private fun showActions() {
+    private fun showActions(preferredActionId: String? = null) {
         val item = list.selectedValue ?: return
         actionsTarget = item
         actionModel.replaceAll(actionsProvider.actionsFor(item) { updated ->
@@ -354,7 +365,9 @@ class RepoLeapPopup(
             val index = actionModel.items.indexOfFirst { it.id == updated.id }
             if (index >= 0) actionModel.setElementAt(updated, index)
         })
-        actionList.selectedIndex = actionModel.items.indexOfFirst { it.enabled }.coerceAtLeast(0)
+        val actions = actionModel.items
+        actionList.selectedIndex = actions.indexOfFirst { it.enabled && it.id == preferredActionId }.takeIf { it >= 0 }
+            ?: actions.indexOfFirst { it.enabled }.coerceAtLeast(0)
 
         actionsHeader.clear()
         actionsHeader.icon = AllIcons.Nodes.Folder
@@ -392,10 +405,10 @@ class RepoLeapPopup(
         ApplicationManager.getApplication().invokeLater(block, ModalityState.nonModal())
     }
 
-    private fun reopen(selection: Path?) {
+    private fun reopen(selection: Path?, actionId: String? = null) {
         // The project the popup was opened from may have been closed in the meantime (Close Project)
         val target = project?.takeUnless { it.isDisposed } ?: ProjectManager.getInstance().openProjects.lastOrNull()
-        RepoLeapPopup(target, searchField.text, selection).show()
+        RepoLeapPopup(target, searchField.text, selection, actionId).show()
     }
 
     private fun backToRepositories() {
@@ -442,6 +455,24 @@ class RepoLeapPopup(
         }
     }
 
+    /**
+     * An empty box as wide as [like], so that the title of the popup is centered despite the toolbar next to it.
+     * The toolbar fills itself in the background, so the box follows its size.
+     */
+    private class Mirror(like: JComponent) : ActiveComponent {
+        private val box = object : JPanel() {
+            override fun getPreferredSize() = like.preferredSize
+        }.apply {
+            isOpaque = false
+            like.addComponentListener(object : ComponentAdapter() {
+                override fun componentResized(e: ComponentEvent) = revalidate()
+            })
+        }
+
+        override fun setActive(active: Boolean) = Unit
+        override fun getComponent(): JComponent = box
+    }
+
     private fun rowAt(list: JList<*>, e: MouseEvent): Int? {
         val row = list.locationToIndex(e.point)
         if (row < 0 || !list.getCellBounds(row, row).contains(e.point)) return null
@@ -473,6 +504,9 @@ class RepoLeapPopup(
     internal fun isShowingActionsForTest(): Boolean = mode == Mode.ACTIONS
 
     @TestOnly
+    internal fun selectedActionIdForTest(): String? = actionList.selectedValue?.id
+
+    @TestOnly
     internal fun actionsForTest(): List<RepoAction> = actionModel.items
 
     @TestOnly
@@ -483,6 +517,9 @@ class RepoLeapPopup(
 
     @TestOnly
     internal fun emptyTextForTest(): String = list.emptyText.text
+
+    @TestOnly
+    internal fun contentForTest(): JComponent = popup!!.content
 
     @TestOnly
     internal fun closeForTest() {
