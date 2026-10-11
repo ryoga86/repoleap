@@ -9,9 +9,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.ColoredListCellRenderer
@@ -61,24 +60,30 @@ internal object BranchSwitcher {
             return
         }
 
+        val popup = createPopup(title, items(branches)) { item ->
+            ApplicationManager.getApplication().invokeLater({
+                if (item == null || item.current) host.reopen(repo.path) else switch(project, repo, git, item, host)
+            }, ModalityState.nonModal())
+        }
+        if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project) else popup.showInFocusCenter()
+    }
+
+    /**
+     * [onDone] gets the chosen branch, or null if the list was left without a choice (Esc, Enter without a match).
+     * Not `onClosed`: the platform runs the item callback only after the listeners, so the choice would still be unknown there.
+     * The final runnable always runs after it.
+     */
+    internal fun createPopup(title: String, items: List<Item>, onDone: (Item?) -> Unit): JBPopup {
         var chosen: Item? = null
-        val popup = JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(items(branches))
+        return JBPopupFactory.getInstance()
+            .createPopupChooserBuilder(items)
             .setTitle(title)
             .setRenderer(Renderer())
             .setNamerForFiltering { it.name }
             .setVisibleRowCount(VISIBLE_ROWS)
             .setItemChosenCallback { chosen = it }
-            .addListener(object : JBPopupListener {
-                override fun onClosed(event: LightweightWindowEvent) {
-                    val item = chosen
-                    ApplicationManager.getApplication().invokeLater({
-                        if (item == null || item.current) host.reopen(repo.path) else switch(project, repo, git, item, host)
-                    }, ModalityState.nonModal())
-                }
-            })
             .createPopup()
-        if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project) else popup.showInFocusCenter()
+            .also { it.setFinalRunnable { onDone(chosen) } }
     }
 
     private fun switch(project: Project?, repo: RepoEntry, git: GitBranches, item: Item, host: RepoActionHost) {
