@@ -7,7 +7,7 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
 | Punkt          | Wert                                                                                              |
 |----------------|---------------------------------------------------------------------------------------------------|
 | Name / ID      | `RepoLeap` / `de.pdenis.repoleap` (Marketplace-ID `34545`)                                        |
-| Version        | `1.1.0` (`gradle.properties` → `pluginVersion`)                                                   |
+| Version        | `1.1.1` (`gradle.properties` → `pluginVersion`)                                                   |
 | Kompatibilität | since-build 252 (2025.2), kein until-build                                                        |
 | Vendor         | Peter Denis, mail@pdenis.de (`gradle.properties` → `pluginVendor` + `plugin.xml`)                 |
 | Lizenz         | MIT (`LICENSE`)                                                                                   |

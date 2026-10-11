@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- *Switch Branch…* did nothing after picking a branch: the choice was read too early and the action list simply
+  reopened
+- The title of the popup is centered again; it is now called “RepoLeap”
+
 ## [1.1.0] - 2026-10-11
 
 ### Added
