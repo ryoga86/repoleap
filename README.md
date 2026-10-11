@@ -43,8 +43,9 @@ path, press **Enter** – the repository opens as a project.
 - **Actions per repository** (**Tab** or right click): close the project, switch branch, pin to top, show the folder
   in the system file manager (Finder / Explorer / …), copy path, open the remote in the browser, show info, hide
   from the list, rename the folder, move it to the Trash
-  - **Switch Branch**: local branches, and remote branches that create a local tracking branch; runs `git switch`,
-    so nothing is forced – if local changes would be overwritten, git refuses and the reason is shown
+  - **Switch Branch**: searchable list of the local branches, and the remote branches that create a local tracking
+    branch; runs `git switch`, so nothing is forced – if local changes would be overwritten, git refuses and the
+    reason is shown
   - **Remote in browser** knows GitHub, GitLab (incl. subgroups), Gitea/Forgejo, Bitbucket Cloud,
     self-hosted Bitbucket Server / Data Center (incl. context paths and personal `~user` repos), Azure DevOps,
     AWS CodeCommit and SourceHut; for anything else, add a rule (host → type or URL template) in the settings

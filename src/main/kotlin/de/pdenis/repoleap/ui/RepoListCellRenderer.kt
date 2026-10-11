@@ -95,7 +95,7 @@ internal class RepoListCellRenderer(
             return 0.2126 * channel(c.red) + 0.7152 * channel(c.green) + 0.0722 * channel(c.blue)
         }
 
-        private val NAME_HIGHLIGHT = SimpleTextAttributes(
+        internal val NAME_HIGHLIGHT = SimpleTextAttributes(
             SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SEARCH_MATCH, null,
         )
         private val PATH_HIGHLIGHT = SimpleTextAttributes(
