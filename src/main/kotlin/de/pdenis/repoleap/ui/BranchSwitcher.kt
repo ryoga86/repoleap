@@ -27,6 +27,9 @@ internal object BranchSwitcher {
         branches.local.map { Item(it, remoteOnly = false, current = it == branches.current) }.sortedByDescending { it.current } +
             branches.remoteOnly.map { Item(it, remoteOnly = true, current = false) }
 
+    /** Back to the actions of [repo], on the action that opened the branch list. */
+    private fun back(host: RepoActionHost, repo: RepoEntry) = host.reopenActions(repo.path, RepoActionsProvider.ID_SWITCH_BRANCH)
+
     fun show(project: Project?, repo: RepoEntry, host: RepoActionHost) {
         val loaded = try {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -38,25 +41,25 @@ internal object BranchSwitcher {
                 project,
             )
         } catch (_: ProcessCanceledException) {
-            host.reopenActions(repo.path)
+            back(host, repo)
             return
         }
         val title = RepoLeapBundle.message("branch.title", repo.name)
         if (loaded == null) {
             Messages.showErrorDialog(project, RepoLeapBundle.message("branch.noGit"), title)
-            host.reopenActions(repo.path)
+            back(host, repo)
             return
         }
         val (git, result) = loaded
         val branches = result.getOrElse { error ->
             Messages.showErrorDialog(project, RepoLeapBundle.message("branch.listFailed", error.message.orEmpty()), title)
-            host.reopenActions(repo.path)
+            back(host, repo)
             return
         }
 
         BranchPopup(title, items(branches)) { item ->
             ApplicationManager.getApplication().invokeLater({
-                if (item == null || item.current) host.reopenActions(repo.path) else switch(project, repo, git, item, host)
+                if (item == null || item.current) back(host, repo) else switch(project, repo, git, item, host)
             }, ModalityState.nonModal())
         }.show(project)
     }
@@ -81,7 +84,7 @@ internal object BranchSwitcher {
                 }
                 Messages.showErrorDialog(project, RepoLeapBundle.message("branch.failed", item.name, message),
                     RepoLeapBundle.message("branch.title", repo.name))
-                host.reopenActions(repo.path) // try another branch
+                back(host, repo) // try another branch
             }
         }.queue()
     }

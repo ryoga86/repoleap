@@ -102,14 +102,18 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             val shown = mutableListOf<RepoLeapPopup>()
             try {
                 // what Esc in "Switch Branch..." does: back to the actions, not to the list
-                shown += RepoLeapPopup(project, "", beta, initialActions = true).also { it.show() }
+                shown += RepoLeapPopup(project, "", beta, initialActionId = RepoActionsProvider.ID_SWITCH_BRANCH).also { it.show() }
                 assertTrue(shown.last().isShowingActionsForTest())
-                assertEquals(RepoActionsProvider.ID_OPEN, shown.last().actionsForTest().first().id)
+                assertEquals("back on the action it came from", RepoActionsProvider.ID_SWITCH_BRANCH, shown.last().selectedActionIdForTest())
+
+                shown += RepoLeapPopup(project, "", beta, initialActionId = "unknown").also { it.show() }
+                assertTrue(shown.last().isShowingActionsForTest())
+                assertEquals("an unknown action falls back to the first", RepoActionsProvider.ID_OPEN, shown.last().selectedActionIdForTest())
 
                 shown += RepoLeapPopup(project, "", beta).also { it.show() }
                 assertFalse("without the flag the list is shown", shown.last().isShowingActionsForTest())
 
-                shown += RepoLeapPopup(project, "", Path.of("/not/listed"), initialActions = true).also { it.show() }
+                shown += RepoLeapPopup(project, "", Path.of("/not/listed"), initialActionId = RepoActionsProvider.ID_OPEN).also { it.show() }
                 assertFalse("an unknown repository falls back to the list", shown.last().isShowingActionsForTest())
             } finally {
                 shown.forEach { it.closeForTest() }

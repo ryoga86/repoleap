@@ -16,8 +16,8 @@
 
 - *Switch Branch…* did nothing after picking a branch: the choice was read too early and the action list simply
   reopened
-- Esc in the branch list goes back to the actions of the repository instead of the repository list; after a
-  successful switch the popup stays closed
+- Esc in the branch list goes back to the actions of the repository (on *Switch Branch…*) instead of the repository
+  list; after a successful switch the popup stays closed
 - The title of the popup is centered again; it is now called “RepoLeap”
 
 ## [1.1.0] - 2026-10-11

@@ -73,8 +73,8 @@ class RepoLeapPopup(
     private val initialQuery: String = "",
     /** Repository to select once it is listed, e.g. after a rename. */
     initialSelection: Path? = null,
-    /** Show the actions of [initialSelection] right away (once it is listed), instead of the repository list. */
-    private val initialActions: Boolean = false,
+    /** Show the actions of [initialSelection] right away (once it is listed) with this one selected, instead of the list. */
+    private val initialActionId: String? = null,
 ) {
 
     private enum class Mode { REPOS, ACTIONS }
@@ -103,7 +103,7 @@ class RepoLeapPopup(
         override fun open(item: RepoListItem, alternative: Boolean) = this@RepoLeapPopup.open(item, alternative)
         override fun closeThen(block: () -> Unit) = this@RepoLeapPopup.closeThen(block)
         override fun reopen(selection: Path?) = this@RepoLeapPopup.reopen(selection)
-        override fun reopenActions(repo: Path) = this@RepoLeapPopup.reopen(repo, showActions = true)
+        override fun reopenActions(repo: Path, actionId: String?) = this@RepoLeapPopup.reopen(repo, actionId)
         override fun backToRepositories() = this@RepoLeapPopup.backToRepositories()
     }
     private val actionsProvider = RepoActionsProvider(project, host)
@@ -159,7 +159,7 @@ class RepoLeapPopup(
         val wanted = pendingSelection
         refilter(keepSelection = false)
         // Only if the repository is listed already (cached); otherwise the list stays, with it selected once it appears
-        if (initialActions && list.selectedValue?.repo?.path == wanted) showActions()
+        if (initialActionId != null && list.selectedValue?.repo?.path == wanted) showActions(initialActionId)
         index.rescan() // show the cached list immediately, refresh it in the background
 
         if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project)
@@ -356,7 +356,7 @@ class RepoLeapPopup(
 
     // --- action view ------------------------------------------------------------------------------------------
 
-    private fun showActions() {
+    private fun showActions(preferredActionId: String? = null) {
         val item = list.selectedValue ?: return
         actionsTarget = item
         actionModel.replaceAll(actionsProvider.actionsFor(item) { updated ->
@@ -365,7 +365,9 @@ class RepoLeapPopup(
             val index = actionModel.items.indexOfFirst { it.id == updated.id }
             if (index >= 0) actionModel.setElementAt(updated, index)
         })
-        actionList.selectedIndex = actionModel.items.indexOfFirst { it.enabled }.coerceAtLeast(0)
+        val actions = actionModel.items
+        actionList.selectedIndex = actions.indexOfFirst { it.enabled && it.id == preferredActionId }.takeIf { it >= 0 }
+            ?: actions.indexOfFirst { it.enabled }.coerceAtLeast(0)
 
         actionsHeader.clear()
         actionsHeader.icon = AllIcons.Nodes.Folder
@@ -403,10 +405,10 @@ class RepoLeapPopup(
         ApplicationManager.getApplication().invokeLater(block, ModalityState.nonModal())
     }
 
-    private fun reopen(selection: Path?, showActions: Boolean = false) {
+    private fun reopen(selection: Path?, actionId: String? = null) {
         // The project the popup was opened from may have been closed in the meantime (Close Project)
         val target = project?.takeUnless { it.isDisposed } ?: ProjectManager.getInstance().openProjects.lastOrNull()
-        RepoLeapPopup(target, searchField.text, selection, showActions).show()
+        RepoLeapPopup(target, searchField.text, selection, actionId).show()
     }
 
     private fun backToRepositories() {
@@ -500,6 +502,9 @@ class RepoLeapPopup(
 
     @TestOnly
     internal fun isShowingActionsForTest(): Boolean = mode == Mode.ACTIONS
+
+    @TestOnly
+    internal fun selectedActionIdForTest(): String? = actionList.selectedValue?.id
 
     @TestOnly
     internal fun actionsForTest(): List<RepoAction> = actionModel.items
