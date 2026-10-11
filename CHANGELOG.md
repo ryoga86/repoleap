@@ -7,7 +7,8 @@
 ### Changed
 
 - The branch list of *Switch Branch…* has a search field on top with the same fuzzy search and highlighting as the
-  repository list (several words in any order, `flf` finds `feature/login-form`); clicking outside the list just closes it
+  repository list (several words in any order, `flf` finds `feature/login-form`); the current branch is marked with
+  a green “● current branch”; clicking outside the list just closes it
 - Order of the actions (Tab): *Switch Branch…* and *Pin to Top* come right after *Close*, *Show Info…* moved behind
   *Open Remote in Browser*
 

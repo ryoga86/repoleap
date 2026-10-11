@@ -8,11 +8,11 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.TextRange
 import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -148,7 +148,7 @@ internal class BranchPopup(
         }
     }
 
-    private class Renderer : ColoredListCellRenderer<Row>() {
+    private class Renderer : TaggedListCellRenderer<Row>() {
         override fun customizeCellRenderer(list: JList<out Row>, value: Row?, index: Int, selected: Boolean, hasFocus: Boolean) {
             if (value == null) return
             val item = value.item
@@ -159,7 +159,7 @@ internal class BranchPopup(
                 RepoListCellRenderer.NAME_HIGHLIGHT,
             )
             when {
-                item.current -> append("  " + RepoLeapBundle.message("branch.current"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+                item.current -> appendTag(RepoLeapBundle.message("branch.current"), RepoListCellRenderer.CURRENT_WINDOW_TAG)
                 item.remoteOnly -> append("  " + RepoLeapBundle.message("branch.remote"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
             }
         }
@@ -175,6 +175,14 @@ internal class BranchPopup(
     /** The listed branches with the highlighted ranges, in list order. */
     @TestOnly
     internal fun rowsForTest(): List<Pair<String, List<IntRange>>> = model.items.map { it.item.name to it.ranges }
+
+    /** Text and fragment attributes of every row as painted (not selected). */
+    @TestOnly
+    internal fun renderedForTest(): List<List<Pair<String, SimpleTextAttributes>>> = model.items.indices.map { i ->
+        val component = list.cellRenderer.getListCellRendererComponent(list, model.getElementAt(i), i, false, false)
+        val iterator = (component as SimpleColoredComponent).iterator()
+        buildList { while (iterator.hasNext()) add(iterator.next().trim() to iterator.textAttributes) }
+    }
 
     @TestOnly
     internal fun pressKeyForTest(keyCode: Int) {

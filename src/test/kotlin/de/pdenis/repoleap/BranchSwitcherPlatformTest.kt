@@ -4,6 +4,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import de.pdenis.repoleap.ui.BranchPopup
 import de.pdenis.repoleap.ui.BranchSwitcher
+import de.pdenis.repoleap.ui.RepoListCellRenderer
 import java.awt.event.KeyEvent
 
 /** The branch list: choice and Esc are handed over, and it searches like the repository list. */
@@ -52,6 +53,14 @@ class BranchSwitcherPlatformTest : BasePlatformTestCase() {
         popup.setSearchTextForTest("")
         popup.pressKeyForTest(KeyEvent.VK_ENTER) // the popup was still open
         assertEquals(listOf<BranchSwitcher.Item?>(main), done)
+    }
+
+    fun testCurrentBranchHasTheGreenTag() = withPopup { popup, _ ->
+        val rows = popup.renderedForTest().map { fragments -> fragments.toMap() }
+        val tag = "\u25CF " + RepoLeapBundle.message("branch.current")
+        assertEquals("\u25CF current branch", tag)
+        assertEquals(RepoListCellRenderer.CURRENT_WINDOW_TAG.fgColor, rows[0].getValue(tag).fgColor)
+        assertTrue("only the current branch has it", rows.drop(1).none { row -> row.keys.any { it.startsWith("\u25CF") } })
     }
 
     fun testSearchIsFuzzyAndHighlights() = withPopup { popup, _ ->
