@@ -44,6 +44,9 @@ internal interface RepoActionHost {
     /** Shows a new popup with the same search text, selecting [selection] once it is listed. */
     fun reopen(selection: Path?)
 
+    /** Like [reopen], but shows the actions of [repo] (back from a list or dialog that was opened from there). */
+    fun reopenActions(repo: Path) = reopen(repo)
+
     /** Leaves the action view and refreshes the repository list (e.g. after pin/hide). */
     fun backToRepositories()
 }

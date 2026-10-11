@@ -96,6 +96,27 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
         }
     }
 
+    fun testPopupCanOpenDirectlyInTheActionsOfARepository() {
+        withPopup(repos("alpha", "beta")) { _ ->
+            val beta = RepoIndexService.getInstance().repositories!!.first { it.name == "beta" }.path
+            val shown = mutableListOf<RepoLeapPopup>()
+            try {
+                // what Esc in "Switch Branch..." does: back to the actions, not to the list
+                shown += RepoLeapPopup(project, "", beta, initialActions = true).also { it.show() }
+                assertTrue(shown.last().isShowingActionsForTest())
+                assertEquals(RepoActionsProvider.ID_OPEN, shown.last().actionsForTest().first().id)
+
+                shown += RepoLeapPopup(project, "", beta).also { it.show() }
+                assertFalse("without the flag the list is shown", shown.last().isShowingActionsForTest())
+
+                shown += RepoLeapPopup(project, "", Path.of("/not/listed"), initialActions = true).also { it.show() }
+                assertFalse("an unknown repository falls back to the list", shown.last().isShowingActionsForTest())
+            } finally {
+                shown.forEach { it.closeForTest() }
+            }
+        }
+    }
+
     fun testPinnedRepositoriesComeFirstAndHiddenOnesAreNotListed() {
         withPopup(repos("alpha", "beta", "gamma")) { popup ->
             assertEquals(listOf("alpha", "beta", "gamma"), popup.visibleRepoNamesForTest())

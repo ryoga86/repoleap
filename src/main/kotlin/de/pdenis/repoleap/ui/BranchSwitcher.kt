@@ -44,25 +44,25 @@ internal object BranchSwitcher {
                 project,
             )
         } catch (_: ProcessCanceledException) {
-            host.reopen(repo.path)
+            host.reopenActions(repo.path)
             return
         }
         val title = RepoLeapBundle.message("branch.title", repo.name)
         if (loaded == null) {
             Messages.showErrorDialog(project, RepoLeapBundle.message("branch.noGit"), title)
-            host.reopen(repo.path)
+            host.reopenActions(repo.path)
             return
         }
         val (git, result) = loaded
         val branches = result.getOrElse { error ->
             Messages.showErrorDialog(project, RepoLeapBundle.message("branch.listFailed", error.message.orEmpty()), title)
-            host.reopen(repo.path)
+            host.reopenActions(repo.path)
             return
         }
 
         val popup = createPopup(title, items(branches)) { item ->
             ApplicationManager.getApplication().invokeLater({
-                if (item == null || item.current) host.reopen(repo.path) else switch(project, repo, git, item, host)
+                if (item == null || item.current) host.reopenActions(repo.path) else switch(project, repo, git, item, host)
             }, ModalityState.nonModal())
         }
         if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project) else popup.showInFocusCenter()

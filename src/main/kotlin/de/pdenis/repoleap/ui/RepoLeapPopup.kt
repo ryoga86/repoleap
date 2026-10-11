@@ -73,6 +73,8 @@ class RepoLeapPopup(
     private val initialQuery: String = "",
     /** Repository to select once it is listed, e.g. after a rename. */
     initialSelection: Path? = null,
+    /** Show the actions of [initialSelection] right away (once it is listed), instead of the repository list. */
+    private val initialActions: Boolean = false,
 ) {
 
     private enum class Mode { REPOS, ACTIONS }
@@ -101,6 +103,7 @@ class RepoLeapPopup(
         override fun open(item: RepoListItem, alternative: Boolean) = this@RepoLeapPopup.open(item, alternative)
         override fun closeThen(block: () -> Unit) = this@RepoLeapPopup.closeThen(block)
         override fun reopen(selection: Path?) = this@RepoLeapPopup.reopen(selection)
+        override fun reopenActions(repo: Path) = this@RepoLeapPopup.reopen(repo, showActions = true)
         override fun backToRepositories() = this@RepoLeapPopup.backToRepositories()
     }
     private val actionsProvider = RepoActionsProvider(project, host)
@@ -153,7 +156,10 @@ class RepoLeapPopup(
 
         index.addListener(popup) { refilter(keepSelection = true) }
         searchField.text = initialQuery
+        val wanted = pendingSelection
         refilter(keepSelection = false)
+        // Only if the repository is listed already (cached); otherwise the list stays, with it selected once it appears
+        if (initialActions && list.selectedValue?.repo?.path == wanted) showActions()
         index.rescan() // show the cached list immediately, refresh it in the background
 
         if (project != null && !project.isDisposed) popup.showCenteredInCurrentWindow(project)
@@ -397,10 +403,10 @@ class RepoLeapPopup(
         ApplicationManager.getApplication().invokeLater(block, ModalityState.nonModal())
     }
 
-    private fun reopen(selection: Path?) {
+    private fun reopen(selection: Path?, showActions: Boolean = false) {
         // The project the popup was opened from may have been closed in the meantime (Close Project)
         val target = project?.takeUnless { it.isDisposed } ?: ProjectManager.getInstance().openProjects.lastOrNull()
-        RepoLeapPopup(target, searchField.text, selection).show()
+        RepoLeapPopup(target, searchField.text, selection, showActions).show()
     }
 
     private fun backToRepositories() {
