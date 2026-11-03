@@ -45,6 +45,17 @@ internal object RepoDialogs {
         }
     }
 
+    fun editTags(project: Project?, repo: RepoEntry, host: RepoActionHost) {
+        val settings = RepoLeapSettings.getInstance()
+        val dialog = TagsDialog(project, repo, settings.tagsOf(repo.pathString), settings.allTags().keys.toList())
+        if (dialog.showAndGet()) {
+            settings.setTags(repo.pathString, dialog.tags)
+            host.reopen(repo.path)
+        } else {
+            host.reopenActions(repo.path, RepoActionsProvider.ID_TAGS)
+        }
+    }
+
     fun rename(project: Project?, repo: RepoEntry, host: RepoActionHost) {
         val validator = object : InputValidatorEx {
             override fun getErrorText(inputString: String): String? =

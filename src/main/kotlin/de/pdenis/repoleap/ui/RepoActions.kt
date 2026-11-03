@@ -14,6 +14,7 @@ import de.pdenis.repoleap.open.RepoFileOperations
 import de.pdenis.repoleap.open.RepoOpener
 import de.pdenis.repoleap.open.WindowMerger
 import de.pdenis.repoleap.open.WindowTabs
+import de.pdenis.repoleap.search.Tags
 import de.pdenis.repoleap.settings.OpenMode
 import de.pdenis.repoleap.settings.RepoLeapSettings
 import java.awt.datatransfer.StringSelection
@@ -171,6 +172,12 @@ internal class RepoActionsProvider(
                 host.backToRepositories()
             },
             RepoAction(
+                ID_TAGS,
+                RepoLeapBundle.message("action.tags"),
+                AllIcons.Nodes.Tag,
+                hint = Tags.format(settings.tagsOf(repo.pathString)).ifEmpty { null },
+            ) { host.closeThen { RepoDialogs.editTags(project, repo, host) } },
+            RepoAction(
                 ID_REVEAL,
                 RevealFileAction.getActionName(),
                 AllIcons.Actions.ProjectDirectory,
@@ -244,6 +251,7 @@ internal class RepoActionsProvider(
         const val ID_COPY_PATH = "copyPath"
         const val ID_BROWSER = "browser"
         const val ID_PIN = "pin"
+        const val ID_TAGS = "tags"
         const val ID_HIDE = "hide"
         const val ID_RENAME = "rename"
         const val ID_TRASH = "trash"

@@ -7,7 +7,7 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
 | Punkt          | Wert                                                                                              |
 |----------------|---------------------------------------------------------------------------------------------------|
 | Name / ID      | `RepoLeap` / `de.pdenis.repoleap` (Marketplace-ID `34545`)                                        |
-| Version        | `1.1.1` (`gradle.properties` → `pluginVersion`)                                                   |
+| Version        | `1.2.0` (`gradle.properties` → `pluginVersion`)                                                   |
 | Kompatibilität | since-build 252 (2025.2), kein until-build                                                        |
 | Vendor         | Peter Denis, mail@pdenis.de (`gradle.properties` → `pluginVendor` + `plugin.xml`)                 |
 | Lizenz         | MIT (`LICENSE`)                                                                                   |
@@ -22,22 +22,14 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
   (`target-branch` in `.github/dependabot.yml`).
 - CI (`build.yml`) läuft bei Pushes auf beide Branches und bei jedem PR. Ein Draft-Release entsteht nur auf `main`.
 
-## Offen: nach der Freigabe von 1.0.0
+## Offen
 
-Hochgeladen am 2026-09-25. Ohne Rückmeldung nach 3–4 Werktagen: marketplace@jetbrains.com.
-
-- [ ] Review-Hinweis (`> [!NOTE]`) oben im `README.md` entfernen
 - [ ] Plugin-Seite: Issue Tracker eintragen (`https://github.com/ryoga86/repoleap/issues`)
 - [ ] Screenshots hochladen (empfohlen 1280×800, keine winzige Schrift), z. B. Popup mit Suchbegriff + Hervorhebung,
-      Settings-Seite
-- [ ] Alte Testversion „Repo Switcher“ (`dev.pdenis.reposwitcher`) lokal deinstallieren, Root-Ordner in RepoLeap neu
-      eintragen
-- [ ] Einmalige Einrichtung für Folge-Releases (unten) erledigen, bevor 1.1.0 ansteht
+      Tags, Klonen per URL, Settings-Seite
 
-Bereits erledigt: Source-Code-Link, Ko-fi unter *Monetization*, öffentlicher Name `Peter Denis`, Non-Trader.
-
-> Solange `pluginVersion` auf `1.0.0` steht, legt jeder Push auf `main` ein Draft-Release `1.0.0` an.
-> **Nicht veröffentlichen** – das startet `release.yml` und damit einen Upload in den Marketplace.
+Bereits erledigt: Source-Code-Link, Ko-fi unter *Monetization*, öffentlicher Name `Peter Denis`, Non-Trader,
+einmalige Einrichtung der Actions (unten).
 
 ## Folge-Releases über GitHub Actions
 

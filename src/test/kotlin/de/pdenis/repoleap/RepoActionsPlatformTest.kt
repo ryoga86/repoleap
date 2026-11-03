@@ -12,7 +12,9 @@ import de.pdenis.repoleap.open.WindowTabs
 import de.pdenis.repoleap.scan.RepoEntry
 import de.pdenis.repoleap.scan.RepoIndexService
 import de.pdenis.repoleap.search.RepoMatcher
+import de.pdenis.repoleap.settings.RepoLeapConfigurable
 import de.pdenis.repoleap.settings.RepoLeapSettings
+import de.pdenis.repoleap.settings.RepoTags
 import de.pdenis.repoleap.settings.SortMode
 import de.pdenis.repoleap.ui.RepoActionHost
 import de.pdenis.repoleap.ui.RepoActionsProvider
@@ -20,6 +22,7 @@ import de.pdenis.repoleap.ui.RepoDialogs
 import de.pdenis.repoleap.ui.RepoInfoDialog
 import de.pdenis.repoleap.ui.RepoLeapPopup
 import de.pdenis.repoleap.ui.RepoListItem
+import de.pdenis.repoleap.ui.TagsDialog
 import de.pdenis.repoleap.ui.WindowState
 import java.awt.event.KeyEvent
 import java.lang.reflect.Proxy
@@ -67,14 +70,16 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
     }
 
     fun testTabShowsTheActionsOfTheSelectedRepositoryAndEscGoesBack() {
-        withPopup(repos("alpha", "beta")) { popup ->
-            popup.selectRepoForTest("beta")
+        // The search looks at the path as well, and the temp folder of a test has a random part (unitTest_<name>_<token>).
+        // A search text with a hyphen can't be in that token, so only the intended repository matches.
+        withPopup(repos("alpha-one", "beta-two")) { popup ->
+            popup.selectRepoForTest("beta-two")
             popup.pressKeyForTest(KeyEvent.VK_TAB)
             assertTrue(popup.isShowingActionsForTest())
             assertEquals(
                 listOf(
                     RepoActionsProvider.ID_OPEN, RepoActionsProvider.ID_OPEN_ALTERNATIVE, RepoActionsProvider.ID_CLOSE,
-                    RepoActionsProvider.ID_SWITCH_BRANCH, RepoActionsProvider.ID_PIN,
+                    RepoActionsProvider.ID_SWITCH_BRANCH, RepoActionsProvider.ID_PIN, RepoActionsProvider.ID_TAGS,
                     RepoActionsProvider.ID_REVEAL, RepoActionsProvider.ID_COPY_PATH, RepoActionsProvider.ID_BROWSER,
                     RepoActionsProvider.ID_INFO, RepoActionsProvider.ID_HIDE, RepoActionsProvider.ID_RENAME,
                     RepoActionsProvider.ID_TRASH,
@@ -90,9 +95,9 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             assertFalse("Tab toggles back", popup.isShowingActionsForTest())
 
             popup.pressKeyForTest(KeyEvent.VK_TAB)
-            popup.setSearchTextForTest("al")
+            popup.setSearchTextForTest("-one")
             assertFalse("typing searches again", popup.isShowingActionsForTest())
-            assertEquals(listOf("alpha"), popup.visibleRepoNamesForTest())
+            assertEquals(listOf("alpha-one"), popup.visibleRepoNamesForTest())
         }
     }
 
@@ -118,6 +123,114 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             } finally {
                 shown.forEach { it.closeForTest() }
             }
+        }
+    }
+
+    fun testHashSearchListsOnlyTaggedRepositories() {
+        val settings = RepoLeapSettings.getInstance()
+        val before = settings.state.repoTags.map { it.copy() }.toMutableList()
+        try {
+            settings.state.repoTags = mutableListOf()
+            withPopup(repos("shop-api", "shop-web", "dotfiles")) { popup ->
+                val paths = RepoIndexService.getInstance().repositories!!.associate { it.name to it.pathString }
+                settings.setTags(paths.getValue("shop-api"), listOf("work", "java"))
+                settings.setTags(paths.getValue("shop-web"), listOf("work", "react"))
+
+                popup.setSearchTextForTest("#")
+                assertEquals("a lone # filters nothing", 3, popup.visibleRepoNamesForTest().size)
+                popup.setSearchTextForTest("#wo")
+                assertEquals(listOf("shop-api", "shop-web"), popup.visibleRepoNamesForTest())
+                popup.setSearchTextForTest("#work #ja")
+                assertEquals(listOf("shop-api"), popup.visibleRepoNamesForTest())
+                popup.setSearchTextForTest("-web #work") // hyphen: can't be part of the random temp folder name
+                assertEquals("combined with the normal search", listOf("shop-web"), popup.visibleRepoNamesForTest())
+                popup.setSearchTextForTest("#python")
+                assertEmpty(popup.visibleRepoNamesForTest())
+                assertEquals(RepoLeapBundle.message("popup.empty.noMatch"), popup.emptyTextForTest())
+
+                popup.setSearchTextForTest("#wo")
+                assertEquals(listOf(listOf("work", "java"), listOf("work", "react")), popup.visibleItemsForTest().map { it.tags })
+                assertEquals("the typed prefix is marked", listOf(2, 0), popup.visibleItemsForTest().first().tagMatches)
+
+                popup.setSearchTextForTest("")
+                popup.selectRepoForTest("shop-api")
+                popup.pressKeyForTest(KeyEvent.VK_TAB)
+                assertEquals("#work #java", popup.actionsForTest().single { it.id == RepoActionsProvider.ID_TAGS }.hint)
+            }
+        } finally {
+            settings.state.repoTags = before
+        }
+    }
+
+    fun testHashSearchExplainsHowToAddTags() {
+        val settings = RepoLeapSettings.getInstance()
+        val before = settings.state.repoTags
+        try {
+            settings.state.repoTags = mutableListOf()
+            withPopup(repos("alpha")) { popup ->
+                popup.setSearchTextForTest("#work")
+                assertEquals(RepoLeapBundle.message("popup.empty.noTags"), popup.emptyTextForTest())
+            }
+        } finally {
+            settings.state.repoTags = before
+        }
+    }
+
+    fun testTagsFollowRenameAndTrash() {
+        val settings = RepoLeapSettings.getInstance()
+        val before = settings.state.repoTags
+        try {
+            settings.state.repoTags = mutableListOf()
+            settings.setTags("/r/old", listOf("#a", "b", "A"))
+            assertEquals(listOf("a", "b"), settings.tagsOf("/r/old"))
+            settings.onRepositoryRenamed("/r/old", "/r/new")
+            assertEquals(emptyList<String>(), settings.tagsOf("/r/old"))
+            assertEquals(listOf("a", "b"), settings.tagsOf("/r/new"))
+            settings.onRepositoryRemoved("/r/new")
+            assertEmpty(settings.state.repoTags)
+            settings.setTags("/r/x", listOf("a"))
+            settings.setTags("/r/x", emptyList())
+            assertEmpty("no empty entries are kept", settings.state.repoTags)
+        } finally {
+            settings.state.repoTags = before
+        }
+    }
+
+    fun testTagsDialogAddsAndRemovesKnownTags() {
+        val repo = RepoEntry("my-repo", Path.of("/repos/my-repo"), "~/repos/my-repo")
+        val dialog = TagsDialog(project, repo, listOf("work"), listOf("java", "work"))
+        try {
+            assertEquals("#work ", dialog.textForTest())
+            dialog.toggle("java")
+            assertEquals(listOf("work", "java"), dialog.tags)
+            dialog.toggle("WORK")
+            assertEquals(listOf("java"), dialog.tags)
+            dialog.setTextForTest("#x, y  #x")
+            assertEquals(listOf("x", "y"), dialog.tags)
+        } finally {
+            Disposer.dispose(dialog.disposable)
+        }
+    }
+
+    fun testSettingsPageRenamesAndRemovesTags() {
+        val settings = RepoLeapSettings.getInstance()
+        val before = settings.state.repoTags
+        settings.state.repoTags = mutableListOf(RepoTags("/a", "work java"), RepoTags("/b", "work"))
+        val configurable = RepoLeapConfigurable()
+        try {
+            configurable.createComponent()
+            configurable.reset()
+            assertEquals(mapOf("java" to 1, "work" to 2), configurable.tagsForTest())
+            configurable.renameTagForTest("work", "job")
+            configurable.renameTagForTest("java", "")
+            assertTrue(configurable.isModified)
+            assertEquals("nothing changes before Apply", "work java", settings.state.repoTags.first().tags)
+            configurable.apply()
+            assertEquals(listOf(RepoTags("/a", "job"), RepoTags("/b", "job")), settings.state.repoTags)
+            assertFalse(configurable.isModified)
+        } finally {
+            configurable.disposeUIResources()
+            settings.state.repoTags = before
         }
     }
 

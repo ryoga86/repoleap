@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.TextRange
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollPaneFactory
@@ -15,7 +14,6 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
-import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.JBUI
 import de.pdenis.repoleap.RepoLeapBundle
 import de.pdenis.repoleap.search.RepoMatcher
@@ -58,7 +56,7 @@ internal class BranchPopup(
         list.selectionMode = ListSelectionModel.SINGLE_SELECTION
         list.visibleRowCount = VISIBLE_ROWS
         list.isFocusable = false // the keyboard focus stays in the search field
-        list.cellRenderer = Renderer()
+        list.cellRenderer = Renderer(MatchHighlight.fromSettings())
         list.emptyText.text = RepoLeapBundle.message("branch.noMatch")
         list.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
@@ -148,15 +146,15 @@ internal class BranchPopup(
         }
     }
 
-    private class Renderer : TaggedListCellRenderer<Row>() {
+    private class Renderer(private val highlight: MatchHighlight) : TaggedListCellRenderer<Row>() {
         override fun customizeCellRenderer(list: JList<out Row>, value: Row?, index: Int, selected: Boolean, hasFocus: Boolean) {
             if (value == null) return
             val item = value.item
             icon = if (item.current) AllIcons.Actions.Checked else AllIcons.Vcs.Branch
-            SpeedSearchUtil.appendColoredFragments(
-                this, item.name, value.ranges.map { TextRange(it.first, it.last + 1) },
+            appendHighlighted(
+                list, item.name, value.ranges,
                 if (item.current) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                RepoListCellRenderer.NAME_HIGHLIGHT,
+                highlight.nameAttributes,
             )
             when {
                 item.current -> appendTag(RepoLeapBundle.message("branch.current"), RepoListCellRenderer.CURRENT_WINDOW_TAG)
