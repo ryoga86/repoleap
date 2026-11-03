@@ -1,5 +1,6 @@
 package de.pdenis.repoleap.ui
 
+import de.pdenis.repoleap.open.CloneTarget
 import de.pdenis.repoleap.scan.RepoEntry
 import de.pdenis.repoleap.search.RepoMatcher
 import de.pdenis.repoleap.settings.SortMode
@@ -17,6 +18,13 @@ data class RepoListItem(
     val windowState: WindowState = WindowState.CLOSED,
     /** 0 = opened most recently via RepoLeap, `null` = not among the recently opened ones. */
     val recentRank: Int? = null,
+    val tags: List<String> = emptyList(),
+    /** Per tag the length of the prefix matched by a `#tag` filter (0 = none), see [de.pdenis.repoleap.search.SearchQuery]. */
+    val tagMatches: List<Int> = emptyList(),
+    /** A remote of this repository is the URL typed into the search. */
+    val sameRemote: Boolean = false,
+    /** Not a repository but "Clone into …" for a URL typed into the search ([repo] only describes the target). */
+    val clone: CloneTarget? = null,
 ) {
     companion object {
         /**

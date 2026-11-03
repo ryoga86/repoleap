@@ -1,6 +1,7 @@
 package de.pdenis.repoleap.scan
 
 import de.pdenis.repoleap.git.GitRepoReader
+import de.pdenis.repoleap.git.RemoteUrls
 import java.io.IOException
 import java.nio.file.DirectoryIteratorException
 import java.nio.file.Files
@@ -93,37 +94,16 @@ class RepoScanner(
             path = absolute,
             displayPath = abbreviateHome(absolute.toString()),
             branch = headReader.readHeadLabel(absolute),
+            // .git/config is small: cheap enough to read for every repository
+            remoteKeys = headReader.readFromFiles(absolute).remotes.mapNotNull { RemoteUrls.identity(it.url) }.toSet(),
         )
     }
 
     private val headReader = GitRepoReader(null)
 
-    private fun resolveRoot(raw: String): Path? {
-        val trimmed = raw.trim()
-        if (trimmed.isEmpty()) return null
-        val expanded = when {
-            trimmed == "~" -> homeDir
-            trimmed.startsWith("~/") || trimmed.startsWith("~\\") -> homeDir + trimmed.substring(1)
-            else -> trimmed
-        }
-        return try {
-            Paths.get(expanded).toAbsolutePath().normalize()
-        } catch (_: InvalidPathException) {
-            null
-        }
-    }
+    private fun resolveRoot(raw: String): Path? = resolveRoot(raw, homeDir)
 
-    private fun abbreviateHome(path: String): String {
-        if (!useTilde || homeDir.isEmpty()) return path
-        return when {
-            path == homeDir -> "~"
-            path.startsWith(homeDir) && path.length > homeDir.length && isSeparator(path[homeDir.length]) ->
-                "~" + path.substring(homeDir.length)
-            else -> path
-        }
-    }
-
-    private fun isSeparator(c: Char) = c == '/' || c == '\\'
+    private fun abbreviateHome(path: String): String = abbreviateHome(path, homeDir, useTilde)
 
     private fun realPathOf(dir: Path): Path =
         try {
@@ -134,5 +114,37 @@ class RepoScanner(
 
     companion object {
         const val GIT_MARKER = ".git"
+
+        private val defaultHome: String get() = System.getProperty("user.home")
+        private val defaultUseTilde: Boolean get() = !System.getProperty("os.name").startsWith("Windows")
+
+        /** A root folder from the settings (`~` expanded), absolute and normalized; `null` if it is no valid path. */
+        fun resolveRoot(raw: String, homeDir: String = defaultHome): Path? {
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) return null
+            val expanded = when {
+                trimmed == "~" -> homeDir
+                trimmed.startsWith("~/") || trimmed.startsWith("~\\") -> homeDir + trimmed.substring(1)
+                else -> trimmed
+            }
+            return try {
+                Paths.get(expanded).toAbsolutePath().normalize()
+            } catch (_: InvalidPathException) {
+                null
+            }
+        }
+
+        /** `/Users/me/dev/x` -> `~/dev/x` (not on Windows). */
+        fun abbreviateHome(path: String, homeDir: String = defaultHome, useTilde: Boolean = defaultUseTilde): String {
+            if (!useTilde || homeDir.isEmpty()) return path
+            return when {
+                path == homeDir -> "~"
+                path.startsWith(homeDir) && path.length > homeDir.length && isSeparator(path[homeDir.length]) ->
+                    "~" + path.substring(homeDir.length)
+                else -> path
+            }
+        }
+
+        private fun isSeparator(c: Char) = c == '/' || c == '\\'
     }
 }

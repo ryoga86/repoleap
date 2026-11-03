@@ -12,6 +12,8 @@ data class RepoEntry(
     val displayPath: String,
     /** Checked out branch (short commit hash for a detached HEAD) at scan time, `null` if unknown. */
     val branch: String? = null,
+    /** [de.pdenis.repoleap.git.RemoteUrls.identity] of every remote, to find a repository by a pasted remote URL. */
+    val remoteKeys: Set<String> = emptySet(),
 ) {
     val pathString: String get() = path.toString()
 }

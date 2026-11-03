@@ -228,6 +228,50 @@ object RemoteUrls {
         return "https://$region.console.aws.amazon.com/codesuite/codecommit/repositories/$repo/browse?region=$region"
     }
 
+    // --- clone: recognizing and comparing remote URLs ---------------------------------------------------------
+
+    private val CLONE_SCHEMES = setOf("http", "https", "ssh", "git", "git+ssh", "ssh+git")
+    private val USER_SCP_LIKE = Regex("""^[^@/\s]+@[^:/\s]+:[^/].*$""")
+
+    /**
+     * `true` if [text] typed into the search is a remote URL to clone: one word that [parse] understands and that is
+     * clearly a URL (`https://…`, `ssh://…`, `git@host:…` or ending in `.git`) - so that a search like `api:v2`
+     * is not taken for one.
+     */
+    fun looksLikeRemoteUrl(text: String): Boolean {
+        val url = text.trim()
+        if (url.isEmpty() || url.any { it.isWhitespace() } || parse(url) == null) return false
+        if (CODECOMMIT_GRC.matches(url)) return true
+        val scheme = URL_WITH_SCHEME.find(url)?.groupValues?.get(1)?.lowercase()
+        return when {
+            scheme != null -> scheme in CLONE_SCHEMES
+            else -> USER_SCP_LIKE.matches(url) || url.endsWith(".git", ignoreCase = true)
+        }
+    }
+
+    /**
+     * Identifies the repository behind a remote URL, independent of the protocol, user and port:
+     * `git@github.com:Acme/Shop.git` and `https://github.com/acme/shop` both give `github.com/acme/shop`.
+     * Bitbucket Server (`scm/` and the context path) and Azure DevOps (`v3/`, `_git/`) are taken into account.
+     */
+    fun identity(remoteUrl: String): String? {
+        val location = parse(remoteUrl) ?: return null
+        var host = location.host
+        var segments = location.segments.map { it.lowercase() }
+        when {
+            host in AZURE_HOSTS || host.endsWith(".visualstudio.com") || "_git" in segments -> {
+                if (host in AZURE_HOSTS) host = "dev.azure.com"
+                segments = segments.filterNot { it == "_git" }.let { if (it.firstOrNull() == "v3") it.drop(1) else it }
+            }
+            bitbucketScmIndex(segments) >= 0 -> segments = segments.drop(bitbucketScmIndex(segments) + 1)
+        }
+        if (segments.isEmpty()) return null
+        return (listOf(host.removePrefix("www.")) + segments).joinToString("/")
+    }
+
+    /** Folder name a clone of [remoteUrl] gets by default (like `git clone` does): the last segment without `.git`. */
+    fun repositoryName(remoteUrl: String): String? = parse(remoteUrl)?.segments?.lastOrNull()?.takeIf { it.isNotBlank() }
+
     // --- helpers ----------------------------------------------------------------------------------------------
 
     private fun cleanPath(raw: String): String = raw.trim('/').removeSuffix(".git").trim('/')

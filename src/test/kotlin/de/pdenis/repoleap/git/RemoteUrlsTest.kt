@@ -1,6 +1,7 @@
 package de.pdenis.repoleap.git
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -162,5 +163,51 @@ class RemoteUrlsTest {
         assertNull(browser(""))
         assertNull(browser("https://github.com/"))
         assertNull(browser("ftp://example.com/repo.git"))
+    }
+
+    // --- clone: recognizing and comparing ---------------------------------------------------------------------
+
+    @Test
+    fun `only clear remote URLs are taken for one`() {
+        for (url in listOf(
+            "https://github.com/acme/shop.git", "https://github.com/acme/shop", "git@github.com:acme/shop.git",
+            "ssh://git@bitbucket.example.com:7999/team/app.git", "  git@github.com:acme/shop  ", "github.com:acme/shop.git",
+            "codecommit::eu-central-1://my-repo",
+        )) assertTrue(url, RemoteUrls.looksLikeRemoteUrl(url))
+        for (text in listOf(
+            "", "shop", "api:v2", "shop api", "https://github.com/", "ftp://example.com/repo.git", "/Users/me/repo.git",
+            "git@github.com:acme/shop.git more",
+        )) assertFalse(text, RemoteUrls.looksLikeRemoteUrl(text))
+    }
+
+    @Test
+    fun `the same repository has the same identity whatever the protocol`() {
+        val github = listOf(
+            "git@github.com:Acme/Shop.git", "https://github.com/acme/shop", "https://user@github.com/acme/shop.git/",
+            "ssh://git@github.com:22/acme/shop.git", "https://www.github.com/acme/shop",
+        ).map { RemoteUrls.identity(it) }
+        assertEquals(listOf("github.com/acme/shop"), github.distinct())
+
+        val bitbucket = listOf(
+            "ssh://git@bb.example.com:7999/team/app.git", "https://bb.example.com/scm/team/app.git",
+            "https://bb.example.com/bitbucket/scm/TEAM/app.git",
+        ).map { RemoteUrls.identity(it) }
+        assertEquals(listOf("bb.example.com/team/app"), bitbucket.distinct())
+
+        val azure = listOf(
+            "git@ssh.dev.azure.com:v3/org/project/repo", "https://org@dev.azure.com/org/project/_git/repo",
+        ).map { RemoteUrls.identity(it) }
+        assertEquals(listOf("dev.azure.com/org/project/repo"), azure.distinct())
+
+        assertFalse(RemoteUrls.identity("git@github.com:acme/shop.git") == RemoteUrls.identity("git@gitlab.com:acme/shop.git"))
+        assertNull(RemoteUrls.identity("/local/path"))
+    }
+
+    @Test
+    fun `clones get the folder name git would use`() {
+        assertEquals("shop", RemoteUrls.repositoryName("git@github.com:acme/shop.git"))
+        assertEquals("app", RemoteUrls.repositoryName("https://bb.example.com/scm/team/app.git"))
+        assertEquals("repo", RemoteUrls.repositoryName("git@ssh.dev.azure.com:v3/org/project/repo"))
+        assertNull(RemoteUrls.repositoryName("nonsense"))
     }
 }
