@@ -24,12 +24,19 @@ Interne Checkliste für Veröffentlichungen im [JetBrains Marketplace](https://p
 
 ## Offen
 
-- [ ] Plugin-Seite: Issue Tracker eintragen (`https://github.com/ryoga86/repoleap/issues`)
-- [ ] Screenshots hochladen (empfohlen 1280×800, keine winzige Schrift), z. B. Popup mit Suchbegriff + Hervorhebung,
-      Tags, Klonen per URL, Settings-Seite
+Nur im Web-Formular der Plugin-Seite möglich (Login nötig):
+
+- [ ] Plugin-Seite: Issue Tracker eintragen (`https://github.com/ryoga86/repoleap/issues`) – in der Marketplace-API ist
+      `bugtrackerUrl` noch leer
+- [ ] Screenshots für 1.2.0 ergänzen (empfohlen 1280×800, keine winzige Schrift): Tags (`#wo`), Klonen per URL,
+      Hervorhebung + Trennzeichen in den Settings. Zwei ältere Screenshots sind bereits hochgeladen.
 
 Bereits erledigt: Source-Code-Link, Ko-fi unter *Monetization*, öffentlicher Name `Peter Denis`, Non-Trader,
 einmalige Einrichtung der Actions (unten).
+
+**1.2.0** ist am 2026-11-03 hochgeladen und wartet auf die Prüfung durch JetBrains (Marketplace-API:
+`hasUnapprovedUpdate`; die neueste öffentliche Version ist solange 1.1.1). Ohne Rückmeldung nach 3–4 Werktagen:
+marketplace@jetbrains.com.
 
 ## Folge-Releases über GitHub Actions
 
@@ -51,8 +58,9 @@ einmalige Einrichtung der Actions (unten).
 1. Auf `develop`: Änderungen unter `## [Unreleased]` in `CHANGELOG.md` eintragen, `pluginVersion` in
    `gradle.properties` erhöhen (`1.1.0`; Pre-Releases wie `1.1.0-beta.1` landen automatisch im Channel `beta`).
 2. PR `develop` → `main` öffnen, CI abwarten, mergen → `build.yml` legt auf `main` ein **Draft-Release** an.
-3. Draft auf GitHub prüfen und veröffentlichen → `release.yml` patcht den Changelog, signiert, lädt in den
-   Marketplace hoch, hängt die ZIPs ans Release und öffnet einen PR mit dem aktualisierten Changelog → mergen.
+3. Draft auf GitHub prüfen und veröffentlichen (nur als `ryoga86` eingeloggt sichtbar; **nicht** über „Draft a new
+   release“ ein zweites anlegen) → `release.yml` patcht den Changelog, signiert, lädt in den Marketplace hoch, hängt
+   die ZIPs ans Release und öffnet einen PR, der nur `CHANGELOG.md` ändert → mergen.
 4. `main` zurück nach `develop` holen, damit der gepatchte Changelog auch dort ist:
    ```bash
    git checkout develop && git pull && git merge origin/main && git push
