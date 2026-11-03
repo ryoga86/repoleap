@@ -77,8 +77,10 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
 
+          # Only the changelog: "commit -a" also picks up anything else the build touched (e.g. line endings of gradlew.bat)
           git checkout -b $BRANCH
-          git commit -am "Changelog update - $VERSION"
+          git add CHANGELOG.md
+          git commit -m "Changelog update - $VERSION"
           git push --set-upstream origin $BRANCH
 
           gh label create "$LABEL" \
