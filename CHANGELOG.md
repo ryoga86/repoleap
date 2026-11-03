@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-03
+
 ### Added
 
 - **Clone from the search field**: paste a git URL (`https://…`, `git@host:…`, `ssh://…`) into the popup. Repositories
@@ -90,7 +92,8 @@
   Azure DevOps, AWS CodeCommit and SourceHut; self-hosted Bitbucket Servers with a neutral host name are
   recognized by asking the server once (can be switched off), custom rules per host in the settings
 
-[Unreleased]: https://github.com/ryoga86/repoleap/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/ryoga86/repoleap/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/ryoga86/repoleap/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/ryoga86/repoleap/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/ryoga86/repoleap/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/ryoga86/repoleap/commits/1.0.0
