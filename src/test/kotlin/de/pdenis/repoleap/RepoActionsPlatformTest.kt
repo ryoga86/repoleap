@@ -70,8 +70,10 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
     }
 
     fun testTabShowsTheActionsOfTheSelectedRepositoryAndEscGoesBack() {
-        withPopup(repos("alpha", "beta")) { popup ->
-            popup.selectRepoForTest("beta")
+        // The search looks at the path as well, and the temp folder of a test has a random part (unitTest_<name>_<token>).
+        // A search text with a hyphen can't be in that token, so only the intended repository matches.
+        withPopup(repos("alpha-one", "beta-two")) { popup ->
+            popup.selectRepoForTest("beta-two")
             popup.pressKeyForTest(KeyEvent.VK_TAB)
             assertTrue(popup.isShowingActionsForTest())
             assertEquals(
@@ -93,9 +95,9 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
             assertFalse("Tab toggles back", popup.isShowingActionsForTest())
 
             popup.pressKeyForTest(KeyEvent.VK_TAB)
-            popup.setSearchTextForTest("al")
+            popup.setSearchTextForTest("-one")
             assertFalse("typing searches again", popup.isShowingActionsForTest())
-            assertEquals(listOf("alpha"), popup.visibleRepoNamesForTest())
+            assertEquals(listOf("alpha-one"), popup.visibleRepoNamesForTest())
         }
     }
 
@@ -140,7 +142,7 @@ class RepoActionsPlatformTest : BasePlatformTestCase() {
                 assertEquals(listOf("shop-api", "shop-web"), popup.visibleRepoNamesForTest())
                 popup.setSearchTextForTest("#work #ja")
                 assertEquals(listOf("shop-api"), popup.visibleRepoNamesForTest())
-                popup.setSearchTextForTest("web #work")
+                popup.setSearchTextForTest("-web #work") // hyphen: can't be part of the random temp folder name
                 assertEquals("combined with the normal search", listOf("shop-web"), popup.visibleRepoNamesForTest())
                 popup.setSearchTextForTest("#python")
                 assertEmpty(popup.visibleRepoNamesForTest())
