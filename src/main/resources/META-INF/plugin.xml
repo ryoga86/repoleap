@@ -32,6 +32,10 @@
                 lead within each group. Or sort by name, path or recently opened instead</li>
             <li><b>Branch at a glance</b> – every repository shows its checked out branch; switch to another local
                 or remote branch right from the popup</li>
+            <li><b>Tags</b> – tag repositories (<code>#work #java</code>) and type <code>#wo</code> to list only
+                those</li>
+            <li><b>Clone by pasting a URL</b> – paste a git URL: see where it is cloned already, or clone it into
+                one of your folders and open it</li>
             <li><b>Jump instead of reopening</b> – open repositories are marked (<i>current window</i>,
                 <i>other window</i>) and choosing one brings exactly that window to the front</li>
             <li><b>macOS window tabs</b> – bring a repository that is open in another window into the current window
@@ -48,12 +52,14 @@
             <li><b>Open the remote in the browser</b> – GitHub, GitLab, Gitea/Forgejo, Bitbucket Cloud,
                 Bitbucket Server / Data Center, Azure DevOps, AWS CodeCommit, SourceHut, or your own rules</li>
             <li><b>Close the project</b>, show the folder in the system file manager, copy the path</li>
-            <li><b>Pin</b> favorites to the top, <b>hide</b> repositories you never need</li>
+            <li><b>Pin</b> favorites to the top, <b>hide</b> repositories you never need, <b>edit tags</b></li>
             <li><b>Switch Branch</b> – via <code>git switch</code>: nothing is forced, local changes are never lost</li>
             <li><b>Rename</b> the folder or <b>move it to the Trash</b> – with a warning about everything
                 that would otherwise be lost (uncommitted changes, unpushed commits, stashes, no remote)</li>
         </ul>
-        <p>Scanning runs in the background, so the popup opens instantly.</p>
+        <p>Scanning runs in the background, so the popup opens instantly. Search matches can be marked the way you
+            like (background, colored text, underline) in your own colors, and the parts of a row can be separated
+            with a symbol of your choice.</p>
 
         <h3>Getting started</h3>
         <ol>
@@ -63,9 +69,10 @@
         <p>The shortcut can be changed in <i>Settings | Keymap</i> (search for “Open Repository”).</p>
 
         <h3>Privacy</h3>
-        <p>RepoLeap does not collect or transmit any data. Only if the type of a self-hosted git server can not be
-        told from the remote URL, it asks that git server once whether it is a Bitbucket Server (can be switched off
-        in the settings).</p>
+        <p>RepoLeap does not collect or transmit any data. Network access only happens when you clone a repository
+        (<code>git clone</code> from that server), and if the type of a self-hosted git server can not be told from
+        the remote URL: then it asks that git server once whether it is a Bitbucket Server (can be switched off in
+        the settings).</p>
 
         <h3>Feedback</h3>
         <p>Found a bug or have an idea? <a href="https://github.com/ryoga86/repoleap/issues">Open an issue on GitHub</a>.</p>

@@ -136,7 +136,7 @@ if (localIdePath.isPresent) {
 
 tasks {
     wrapper {
-        gradleVersion = "9.8.0"
+        gradleVersion = "9.8.2"
     }
 
     publishPlugin {
