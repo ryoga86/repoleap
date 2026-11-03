@@ -80,4 +80,13 @@ class RepoMatcherTest {
     fun `merge joins adjacent and overlapping ranges`() {
         assertEquals(listOf(0..4, 7..8), RepoMatcher.merge(listOf(3..4, 0..2, 7..7, 8..8, 1..3)))
     }
+
+    @Test
+    fun `a short text also matches a random part of the path`() {
+        // Why the popup tests search for something with a hyphen: temp folders of tests have a random token like this one
+        val path = "/tmp/unitTest_testTab_3LalsepQIhndml2g4/beta-two"
+        assertNotNull("'al' is in the token, although the name has nothing to do with it", match("al", "beta-two", path))
+        assertNull("a hyphen can't be part of such a token", match("-one", "beta-two", path))
+        assertNotNull(match("-two", "beta-two", path))
+    }
 }

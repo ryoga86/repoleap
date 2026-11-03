@@ -29,12 +29,15 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import de.pdenis.repoleap.RepoLeapBundle
+import de.pdenis.repoleap.open.CloneTarget
+import de.pdenis.repoleap.open.RepoCloner
 import de.pdenis.repoleap.open.RepoOpener
 import de.pdenis.repoleap.scan.RepoIndexService
-import de.pdenis.repoleap.search.RepoMatcher
+import de.pdenis.repoleap.search.SearchQuery
 import de.pdenis.repoleap.settings.OpenMode
 import de.pdenis.repoleap.settings.RepoLeapConfigurable
 import de.pdenis.repoleap.settings.RepoLeapSettings
+import de.pdenis.repoleap.settings.RowPart
 import de.pdenis.repoleap.settings.SortMode
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
@@ -81,6 +84,7 @@ class RepoLeapPopup(
 
     private val settings = RepoLeapSettings.getInstance()
     private val index = RepoIndexService.getInstance()
+    private val listBuilder = RepoListBuilder(settings, ::windowStateOf)
 
     private val searchField = SearchTextField(false)
     private val model = CollectionListModel<RepoListItem>()
@@ -289,30 +293,16 @@ class RepoLeapPopup(
     // --- repository list --------------------------------------------------------------------------------------
 
     private fun refilter(keepSelection: Boolean) {
-        val repositories = index.repositories.orEmpty().filterNot { settings.isHidden(it.pathString) }
-        val tokens = RepoMatcher.tokenize(searchField.text)
-        val recentRank = settings.recentRepos.withIndex().associate { (rank, path) -> path to rank }
-
-        val items = repositories.mapNotNull { repo ->
-            val match = RepoMatcher.match(tokens, repo.name, repo.displayPath) ?: return@mapNotNull null
-            val rank = recentRank[repo.pathString]
-            val recentBonus = rank?.let { (RepoLeapSettings.MAX_RECENT - it) * RECENT_BONUS } ?: 0
-            RepoListItem(
-                repo, match, match.score + recentBonus,
-                pinned = settings.isPinned(repo.pathString),
-                windowState = windowStateOf(repo.pathString),
-                recentRank = rank,
-            )
-        }.sortedWith(RepoListItem.order(settings.state.sortMode, searching = tokens.isNotEmpty()))
+        val items = listBuilder.build(searchField.text, index.repositories.orEmpty())
 
         val toSelect = pendingSelection ?: if (keepSelection) list.selectedValue?.repo?.path else null
         model.replaceAll(items)
         if (items.isEmpty()) {
             list.clearSelection()
         } else {
-            val found = toSelect?.let { selected -> items.indexOfFirst { it.repo.path == selected } }?.takeIf { it >= 0 }
+            val found = toSelect?.let { selected -> items.indexOfFirst { it.clone == null && it.repo.path == selected } }?.takeIf { it >= 0 }
             if (found != null && toSelect == pendingSelection) pendingSelection = null
-            val row = found ?: 0
+            val row = found ?: items.indexOfFirst { it.clone?.enabled != false }.coerceAtLeast(0)
             list.selectedIndex = row
             list.ensureIndexIsVisible(row)
         }
@@ -326,7 +316,7 @@ class RepoLeapPopup(
         else -> WindowState.CLOSED
     }
 
-    private fun updateEmptyText() {
+    private fun updateEmptyText(query: SearchQuery = SearchQuery.parse(searchField.text)) {
         val emptyText = list.emptyText
         emptyText.clear()
         val repositories = index.repositories
@@ -345,19 +335,35 @@ class RepoLeapPopup(
                     RepoLeapBundle.message("popup.empty.configure"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                 ) { openSettings() }
             }
+            query.tagPrefixes.isNotEmpty() && settings.allTags().isEmpty() -> {
+                emptyText.appendText(RepoLeapBundle.message("popup.empty.noTags"))
+                emptyText.appendSecondaryText(RepoLeapBundle.message("popup.empty.noTags.hint"), SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
+            }
             else -> emptyText.appendText(RepoLeapBundle.message("popup.empty.noMatch"))
         }
     }
 
     private fun openSelected(alternative: Boolean) {
         val item = list.selectedValue ?: return
-        open(item, alternative)
+        val clone = item.clone
+        if (clone != null) cloneTo(clone, alternative) else open(item, alternative)
+    }
+
+    /** After an error the popup comes back with the URL, to try another folder. */
+    private fun cloneTo(target: CloneTarget, alternative: Boolean) {
+        if (!target.enabled) return
+        val destination = target.target
+        closeThen {
+            if (destination == null) RepoCloner.chooseFolderAndClone(project, target, alternative) { reopen(null) }
+            else RepoCloner.clone(project, target.url, destination, alternative) { reopen(null) }
+        }
     }
 
     // --- action view ------------------------------------------------------------------------------------------
 
     private fun showActions(preferredActionId: String? = null) {
         val item = list.selectedValue ?: return
+        if (item.clone != null) return // nothing to do with a folder that does not exist yet
         actionsTarget = item
         actionModel.replaceAll(actionsProvider.actionsFor(item) { updated ->
             // e.g. the remote's web page after the git server answered - only if these actions are still shown
@@ -435,6 +441,7 @@ class RepoLeapPopup(
             add(RowDetailAction(RepoLeapBundle.message("settings.show.branch"), RepoLeapSettings.State::showBranch))
             add(RowDetailAction(RepoLeapBundle.message("settings.show.path"), RepoLeapSettings.State::showPath))
             add(RowDetailAction(RepoLeapBundle.message("settings.show.windowState"), RepoLeapSettings.State::showWindowState))
+            add(RowDetailAction(RepoLeapBundle.message("settings.show.tags"), RepoLeapSettings.State::showTags))
         }
         val group = DefaultActionGroup(
             MenuAction(RepoLeapBundle.message("popup.action.sort"), AllIcons.ObjectBrowser.Sorted, sortGroup),
@@ -488,6 +495,12 @@ class RepoLeapPopup(
 
     @TestOnly
     internal fun visibleRepoNamesForTest(): List<String> = model.items.map { it.repo.name }
+
+    @TestOnly
+    internal fun visibleItemsForTest(): List<RepoListItem> = model.items
+
+    @TestOnly
+    internal fun selectedItemForTest(): RepoListItem? = list.selectedValue
 
     @TestOnly
     internal fun selectRepoForTest(name: String) {
@@ -546,6 +559,10 @@ class RepoLeapPopup(
         renderer.showBranch = state.showBranch
         renderer.showPath = state.showPath
         renderer.showWindowState = state.showWindowState
+        renderer.showTags = state.showTags
+        renderer.separator = state.rowSeparator
+        renderer.order = RowPart.parse(state.rowOrder)
+        renderer.highlight = MatchHighlight.fromSettings(state)
         list.repaint()
     }
 
@@ -597,6 +614,5 @@ class RepoLeapPopup(
         const val DIMENSION_SERVICE_KEY = "de.pdenis.repoleap.popup"
         const val TOOLBAR_PLACE = "RepoLeapPopup"
         const val VISIBLE_ROWS = 15
-        const val RECENT_BONUS = 5
     }
 }

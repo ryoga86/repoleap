@@ -4,6 +4,32 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Clone from the search field**: paste a git URL (`https://…`, `git@host:…`, `ssh://…`) into the popup. Repositories
+  that are cloned from it already are listed first (“● cloned from this URL”), SSH and HTTPS URLs count as the same.
+  Below, *Clone into ~/dev/repo* is offered for every repository folder, and *Clone into another folder…* – a folder
+  outside the repository folders is added to them, so the new repository is listed from then on. The clone runs in
+  the background (with progress, can be canceled) and opens the repository afterwards; **Shift+Enter** uses the
+  alternative open mode. git runs without asking for passwords: use the ssh agent or a credential helper
+- **Tags**: *Edit Tags…* in the actions (Tab) gives a repository tags like `#work #java`; typing `#wo` in the search
+  lists only the repositories with a tag starting with it (several `#tags` must all match, and can be combined with
+  normal search words). Tags are shown in the row and can be renamed or removed for all repositories in
+  *Settings | Tools | RepoLeap | Tags*
+- **Separator and order of the parts of a row**: *Settings | Tools | RepoLeap | Popup* lets you choose a separator
+  of up to three characters such as `/`, `·` or `|`, so a row reads
+  `my-repo / main / #work / ~/dev/my-repo / ● other window`, and the order of branch, tags, path and window state
+  (arrow buttons; the name always comes first). Defaults: no separator, the order as before. The preview on the
+  settings page shows both, and follows the *Show next to the name* checkboxes as well
+- **How search matches are marked** can be chosen in *Settings | Tools | RepoLeap | Popup*: colored bold text
+  (default), the theme's search-match background, underlined or wavy underline – in the theme's color or an own
+  color for light and dark themes, with a preview. Used in the repository and the branch list. On a selected row,
+  where the color would be hard to read, the match is underlined instead
+
+### Changed
+
+- The search field hint mentions `#tag` and pasting a git URL
+
 ## [1.1.1] - 2026-10-11
 
 ### Changed
