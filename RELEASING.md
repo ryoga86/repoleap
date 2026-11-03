@@ -34,9 +34,9 @@ Nur im Web-Formular der Plugin-Seite möglich (Login nötig):
 Bereits erledigt: Source-Code-Link, Ko-fi unter *Monetization*, öffentlicher Name `Peter Denis`, Non-Trader,
 einmalige Einrichtung der Actions (unten).
 
-**1.2.0** ist am 2026-11-03 hochgeladen und wartet auf die Prüfung durch JetBrains (Marketplace-API:
-`hasUnapprovedUpdate`; die neueste öffentliche Version ist solange 1.1.1). Ohne Rückmeldung nach 3–4 Werktagen:
-marketplace@jetbrains.com.
+**Prüfung durch JetBrains:** Jede hochgeladene Version wird erst geprüft (1.2.0 war wenige Stunden nach dem Upload
+freigegeben). Status ohne Login: `curl -s "https://plugins.jetbrains.com/api/plugins/34545/updates?size=1"` →
+`approve: true` heißt öffentlich. Ohne Rückmeldung nach 3–4 Werktagen: marketplace@jetbrains.com.
 
 ## Folge-Releases über GitHub Actions
 
